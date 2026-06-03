@@ -20,6 +20,47 @@ const SECTOR_COLORS: Record<string, string> = {
 const NIGERIA_CENTER: [number, number] = [9.0820, 8.6753];
 const NIGERIA_ZOOM = 6;
 
+// Nigerian states with coordinates for choropleth circles
+const NIGERIA_STATES = [
+  { name: 'Abia',        lat: 5.4527,  lng: 7.5248  },
+  { name: 'Adamawa',     lat: 9.3265,  lng: 12.3984 },
+  { name: 'Akwa Ibom',   lat: 5.0077,  lng: 7.8537  },
+  { name: 'Anambra',     lat: 6.2209,  lng: 7.0388  },
+  { name: 'Bauchi',      lat: 10.7761, lng: 9.9994  },
+  { name: 'Bayelsa',     lat: 4.9057,  lng: 6.2734  },
+  { name: 'Benue',       lat: 7.3369,  lng: 8.7404  },
+  { name: 'Borno',       lat: 11.8846, lng: 13.1520 },
+  { name: 'Cross River', lat: 5.8702,  lng: 8.5988  },
+  { name: 'Delta',       lat: 5.8904,  lng: 5.6801  },
+  { name: 'Ebonyi',      lat: 6.2649,  lng: 8.0137  },
+  { name: 'Edo',         lat: 6.3350,  lng: 5.6037  },
+  { name: 'Ekiti',       lat: 7.7190,  lng: 5.3110  },
+  { name: 'Enugu',       lat: 6.4584,  lng: 7.5464  },
+  { name: 'FCT',         lat: 9.0574,  lng: 7.4898  },
+  { name: 'Gombe',       lat: 10.3635, lng: 11.1987 },
+  { name: 'Imo',         lat: 5.5720,  lng: 7.0588  },
+  { name: 'Jigawa',      lat: 12.2280, lng: 9.5615  },
+  { name: 'Kaduna',      lat: 10.5222, lng: 7.4383  },
+  { name: 'Kano',        lat: 12.0022, lng: 8.5920  },
+  { name: 'Katsina',     lat: 12.9889, lng: 7.6139  },
+  { name: 'Kebbi',       lat: 11.4869, lng: 4.2033  },
+  { name: 'Kogi',        lat: 7.8011,  lng: 6.7399  },
+  { name: 'Kwara',       lat: 8.9669,  lng: 4.3874  },
+  { name: 'Lagos',       lat: 6.5244,  lng: 3.3792  },
+  { name: 'Nasarawa',    lat: 8.5560,  lng: 8.5227  },
+  { name: 'Niger',       lat: 9.9309,  lng: 5.5983  },
+  { name: 'Ogun',        lat: 6.9980,  lng: 3.4737  },
+  { name: 'Ondo',        lat: 7.1007,  lng: 4.8358  },
+  { name: 'Osun',        lat: 7.5629,  lng: 4.5200  },
+  { name: 'Oyo',         lat: 7.8499,  lng: 3.9470  },
+  { name: 'Plateau',     lat: 9.2182,  lng: 9.5179  },
+  { name: 'Rivers',      lat: 4.8396,  lng: 6.9086  },
+  { name: 'Sokoto',      lat: 13.0059, lng: 5.2476  },
+  { name: 'Taraba',      lat: 7.8731,  lng: 10.5836 },
+  { name: 'Yobe',        lat: 12.2939, lng: 11.4390 },
+  { name: 'Zamfara',     lat: 12.1222, lng: 6.2236  },
+];
+
 function Toggle({ label, checked, onChange, id }: {
   label: string; checked: boolean; onChange: () => void; id: string;
 }) {
@@ -45,17 +86,28 @@ function Toggle({ label, checked, onChange, id }: {
   );
 }
 
-export default function NigeriaMap({ outbreaks }: Props) {
-  const mapRef     = useRef<HTMLDivElement>(null);
-  const leafletRef = useRef<any>(null);
-  const heatRef    = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
+function getChoroplethColor(count: number): string {
+  if (count === 0) return 'rgba(200,200,200,0.15)';
+  if (count === 1) return 'rgba(254,229,217,0.6)';
+  if (count === 2) return 'rgba(252,174,145,0.6)';
+  if (count === 3) return 'rgba(251,106,74,0.6)';
+  if (count >= 4)  return 'rgba(203,24,29,0.65)';
+  return 'rgba(200,200,200,0.15)';
+}
 
-  const [disease,    setDisease]    = useState<Disease>('all');
-  const [sector,     setSector]     = useState<Sector>('all');
-  const [showHeat,   setShowHeat]   = useState(false);
-  const [showLayers, setShowLayers] = useState(true);
-  const [ready,      setReady]      = useState(false);
+export default function NigeriaMap({ outbreaks }: Props) {
+  const mapRef      = useRef<HTMLDivElement>(null);
+  const leafletRef  = useRef<any>(null);
+  const heatRef     = useRef<any>(null);
+  const markersRef  = useRef<any[]>([]);
+  const choroRef    = useRef<any[]>([]);
+
+  const [disease,      setDisease]      = useState<Disease>('all');
+  const [sector,       setSector]       = useState<Sector>('all');
+  const [showHeat,     setShowHeat]     = useState(false);
+  const [showLayers,   setShowLayers]   = useState(true);
+  const [showChoropleth, setShowChoropleth] = useState(false);
+  const [ready,        setReady]        = useState(false);
 
   const diseaseOptions = ['all', ...Array.from(new Set(outbreaks.map(o => o.disease))).sort()];
 
@@ -103,9 +155,14 @@ export default function NigeriaMap({ outbreaks }: Props) {
     if (!ready || !leafletRef.current) return;
     const { L, map } = leafletRef.current;
 
+    // Clear markers
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
     if (heatRef.current) { heatRef.current.remove(); heatRef.current = null; }
+
+    // Clear choropleth
+    choroRef.current.forEach(c => c.remove());
+    choroRef.current = [];
 
     const filtered = outbreaks.filter(o => {
       const diseaseMatch = disease === 'all' || o.disease === disease;
@@ -113,6 +170,33 @@ export default function NigeriaMap({ outbreaks }: Props) {
       return diseaseMatch && sectorMatch;
     });
 
+    // ── Choropleth layer ──────────────────────────────────────────
+    if (showChoropleth) {
+      NIGERIA_STATES.forEach(state => {
+        const count = filtered.filter(o =>
+          o.state?.toLowerCase().includes(state.name.toLowerCase()) ||
+          state.name.toLowerCase().includes(o.state?.toLowerCase() ?? '')
+        ).length;
+
+        const circle = L.circle([state.lat, state.lng], {
+          radius:      count === 0 ? 40000 : 55000 + count * 15000,
+          color:       count === 0 ? 'rgba(150,150,150,0.3)' : '#E24B4A',
+          weight:      1,
+          fillColor:   getChoroplethColor(count),
+          fillOpacity: 1,
+        });
+
+        circle.bindTooltip(
+          `<strong>${state.name}</strong><br/>${count} active outbreak${count !== 1 ? 's' : ''}`,
+          { sticky: true, className: 'leaflet-tooltip-custom' }
+        );
+
+        circle.addTo(map);
+        choroRef.current.push(circle);
+      });
+    }
+
+    // ── Heatmap layer ─────────────────────────────────────────────
     if (showHeat) {
       const heatPoints = filtered.map(o => {
         const intensity = o.severity === 'critical' ? 1.0 : o.severity === 'high' ? 0.7 : 0.4;
@@ -127,6 +211,7 @@ export default function NigeriaMap({ outbreaks }: Props) {
       }).addTo(map);
     }
 
+    // ── Outbreak markers ─────────────────────────────────────────
     if (showLayers) {
       filtered.forEach(o => {
         if (!o.latitude || !o.longitude) return;
@@ -135,7 +220,7 @@ export default function NigeriaMap({ outbreaks }: Props) {
 
         const marker = L.circleMarker([o.latitude, o.longitude], {
           radius,
-          color:       color,
+          color,
           weight:      2,
           fillColor:   color,
           fillOpacity: 0.85,
@@ -160,7 +245,7 @@ export default function NigeriaMap({ outbreaks }: Props) {
         markersRef.current.push(marker);
       });
     }
-  }, [ready, outbreaks, disease, sector, showHeat, showLayers]);
+  }, [ready, outbreaks, disease, sector, showHeat, showLayers, showChoropleth]);
 
   const filteredCount = outbreaks.filter(o =>
     (disease === 'all' || o.disease === disease) &&
@@ -202,8 +287,9 @@ export default function NigeriaMap({ outbreaks }: Props) {
           </select>
         </div>
 
-        <Toggle label="Heatmap"           checked={showHeat}   onChange={() => setShowHeat(v => !v)}   id="heatToggle"   />
-        <Toggle label="One Health layers" checked={showLayers} onChange={() => setShowLayers(v => !v)} id="layersToggle" />
+        <Toggle label="Choropleth"        checked={showChoropleth} onChange={() => setShowChoropleth(v => !v)} id="choroToggle"   />
+        <Toggle label="Heatmap"           checked={showHeat}       onChange={() => setShowHeat(v => !v)}       id="heatToggle"   />
+        <Toggle label="One Health layers" checked={showLayers}     onChange={() => setShowLayers(v => !v)}     id="layersToggle" />
 
         <span className="ml-auto text-xs text-gray-400">{filteredCount} event(s) shown</span>
       </div>
@@ -219,6 +305,23 @@ export default function NigeriaMap({ outbreaks }: Props) {
             {s.charAt(0).toUpperCase() + s.slice(1)}
           </div>
         ))}
+        {showChoropleth && (
+          <div className="flex items-center gap-2 ml-2 border-l border-gray-200 dark:border-gray-700 pl-2">
+            <span className="text-xs text-gray-400">Choropleth:</span>
+            {[
+              { label: '0', color: 'rgba(200,200,200,0.4)' },
+              { label: '1', color: 'rgba(254,229,217,0.8)' },
+              { label: '2', color: 'rgba(252,174,145,0.8)' },
+              { label: '3', color: 'rgba(251,106,74,0.8)'  },
+              { label: '4+', color: 'rgba(203,24,29,0.8)'  },
+            ].map(({ label, color }) => (
+              <div key={label} className="flex items-center gap-1 text-xs text-gray-500">
+                <span className="w-3 h-3 rounded-full inline-block border border-gray-300" style={{ background: color }} />
+                {label}
+              </div>
+            ))}
+          </div>
+        )}
         <span className="ml-auto text-xs text-gray-400">Marker size = severity</span>
       </div>
     </div>
