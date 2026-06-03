@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import StatCards from '@/components/StatCards';
 import NigeriaMap from '@/components/NigeriaMap';
+import TrendChart from '@/components/TrendChart';
 import { getActiveOutbreaks, getDashboardStats } from '@/lib/outbreaks';
 import type { OutbreakEvent, DashboardStats } from '@/types/outbreak';
 
@@ -99,6 +100,9 @@ export default function DashboardPage() {
             <NigeriaMap outbreaks={outbreaks} />
           )}
         </section>
+
+        {/* Trend chart */}
+        <TrendChart outbreaks={outbreaks} />
 
         {/* Bottom row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
