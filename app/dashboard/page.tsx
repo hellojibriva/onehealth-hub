@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import StatCards from '@/components/StatCards';
 import NigeriaMap from '@/components/NigeriaMap';
 import TrendChart from '@/components/TrendChart';
+import AlertBell from '@/components/AlertBell';
 import { getActiveOutbreaks, getDashboardStats } from '@/lib/outbreaks';
 import type { OutbreakEvent, DashboardStats } from '@/types/outbreak';
 
@@ -72,10 +73,13 @@ export default function DashboardPage() {
               Integrated Zoonotic Disease Surveillance · Nigeria
             </p>
           </div>
-          <span className="text-xs text-gray-400 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-teal-500 inline-block animate-pulse" />
-            Live
-          </span>
+          <div className="flex items-center gap-3">
+            <AlertBell />
+            <span className="text-xs text-gray-400 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-teal-500 inline-block animate-pulse" />
+              Live
+            </span>
+          </div>
         </div>
 
         {/* Stat Cards */}
