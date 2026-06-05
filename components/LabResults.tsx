@@ -48,13 +48,13 @@ function ResultBadge({ result }: { result: string }) {
 }
 
 export default function LabResults() {
-  const [results,  setResults]  = useState<LabResult[]>([]);
-  const [loading,  setLoading]  = useState(true);
-  const [filter,   setFilter]   = useState<'all' | 'positive' | 'negative' | 'inconclusive'>('all');
-  const [search,   setSearch]   = useState('');
+  const [results, setResults] = useState<LabResult[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter,  setFilter]  = useState<'all' | 'positive' | 'negative' | 'inconclusive'>('all');
+  const [search,  setSearch]  = useState('');
 
   useEffect(() => {
-    async function fetch() {
+    async function loadData() {
       const supabase = getSupabase();
       const { data } = await supabase
         .from('lab_results')
@@ -63,13 +63,13 @@ export default function LabResults() {
       setResults((data ?? []) as LabResult[]);
       setLoading(false);
     }
-    fetch();
+    loadData();
 
-    // Real-time
     const supabase = getSupabase();
     const channel = supabase
       .channel('lab-realtime')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'lab_results' },
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'lab_results' },
         (payload) => setResults(prev => [payload.new as LabResult, ...prev])
       )
       .subscribe();
@@ -93,7 +93,6 @@ export default function LabResults() {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
 
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center gap-2">
           <FlaskConical size={16} className="text-teal-600" />
@@ -102,8 +101,6 @@ export default function LabResults() {
           </h3>
           <span className="text-xs text-gray-400">({results.length} total)</span>
         </div>
-
-        {/* Summary badges */}
         <div className="flex items-center gap-3">
           <span className="text-xs font-medium text-red-500">{positiveCount} positive</span>
           <span className="text-xs font-medium text-teal-600">{negativeCount} negative</span>
@@ -111,7 +108,6 @@ export default function LabResults() {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800">
         <input
           type="text"
@@ -137,7 +133,6 @@ export default function LabResults() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto">
         {loading ? (
           <div className="p-8 text-center text-sm text-gray-400">Loading lab results...</div>
@@ -147,4 +142,60 @@ export default function LabResults() {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-800">
-                {['Sample ID', 'Pathogen',
+                <th className="text-left px-4 py-3 text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">Sample ID</th>
+                <th className="text-left px-4 py-3 text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">Pathogen</th>
+                <th className="text-left px-4 py-3 text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">Specimen</th>
+                <th className="text-left px-4 py-3 text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">Method</th>
+                <th className="text-left px-4 py-3 text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">Result</th>
+                <th className="text-left px-4 py-3 text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">CT Value</th>
+                <th className="text-left px-4 py-3 text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">Collection</th>
+                <th className="text-left px-4 py-3 text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">Lab</th>
+                <th className="text-left px-4 py-3 text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">Facility</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((r, i) => (
+                <tr
+                  key={r.id}
+                  className={`border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${
+                    i % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-800/20'
+                  }`}
+                >
+                  <td className="px-4 py-3 font-mono text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                    {r.sample_id}
+                  </td>
+                  <td className="px-4 py-3 text-gray-800 dark:text-gray-200 font-medium whitespace-nowrap">
+                    {r.pathogen}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                    {r.specimen_type}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                    {r.test_method}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <ResultBadge result={r.result} />
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                    {r.ct_value ?? '—'}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                    {new Date(r.collection_date).toLocaleDateString('en-NG', {
+                      day: 'numeric', month: 'short', year: 'numeric'
+                    })}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                    {r.lab_name}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                    {r.requesting_facility ?? '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
