@@ -6,6 +6,7 @@ import NigeriaMap from '@/components/NigeriaMap';
 import TrendChart from '@/components/TrendChart';
 import AlertBell from '@/components/AlertBell';
 import ExportButton from '@/components/ExportButton';
+import LabResults from '@/components/LabResults';
 import { getActiveOutbreaks, getDashboardStats } from '@/lib/outbreaks';
 import type { OutbreakEvent, DashboardStats } from '@/types/outbreak';
 
@@ -109,7 +110,8 @@ export default function DashboardPage() {
 
         {/* Trend chart */}
         <TrendChart outbreaks={outbreaks} />
-
+{/* Lab results */}
+        <LabResults />
         {/* Bottom row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
