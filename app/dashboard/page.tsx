@@ -6,6 +6,7 @@ import NigeriaMap from '@/components/NigeriaMap';
 import TrendChart from '@/components/TrendChart';
 import AlertBell from '@/components/AlertBell';
 import ExportButton from '@/components/ExportButton';
+import CollectModal from '@/components/CollectModal';
 import LabResults from '@/components/LabResults';
 import { getActiveOutbreaks, getDashboardStats } from '@/lib/outbreaks';
 import type { OutbreakEvent, DashboardStats } from '@/types/outbreak';
@@ -38,7 +39,7 @@ export default function DashboardPage() {
     totalTracked: 0, statesAffected: 0, weeklyChange: 0,
   });
   const [loading, setLoading] = useState(true);
-
+const [collectOpen, setCollectOpen] = useState(false);
   useEffect(() => {
     async function load() {
       const [o, s] = await Promise.all([getActiveOutbreaks(), getDashboardStats()]);
@@ -76,6 +77,12 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setCollectOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors"
+            >
+              + Report
+            </button>
             <ExportButton outbreaks={outbreaks} />
             <AlertBell />
             <span className="text-xs text-gray-400 flex items-center gap-1.5">
@@ -163,6 +170,7 @@ export default function DashboardPage() {
           </div>
 
         </div>
+        <CollectModal open={collectOpen} onClose={() => setCollectOpen(false)} />
       </div>
     </main>
   );
