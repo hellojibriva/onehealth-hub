@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, WifiOff, Wifi, Send, ClipboardList } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
@@ -71,16 +72,14 @@ interface Props {
 }
 
 export default function CollectModal({ open, onClose }: Props) {
-  const [form,      setForm]      = useState<FormData>(EMPTY);
-  const [saving,    setSaving]    = useState(false);
-  const [syncing,   setSyncing]   = useState(false);
-  const [saved,     setSaved]     = useState(false);
-  const [queueLen,  setQueueLen]  = useState(() => getQueue().length);
-  const [isOnline,  setIsOnline]  = useState(() =>
+  const [form,     setForm]     = useState<FormData>(EMPTY);
+  const [saving,   setSaving]   = useState(false);
+  const [syncing,  setSyncing]  = useState(false);
+  const [saved,    setSaved]    = useState(false);
+  const [queueLen, setQueueLen] = useState(() => getQueue().length);
+  const [isOnline, setIsOnline] = useState(() =>
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
-
-  if (!open) return null;
 
   function update(field: keyof FormData, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -91,7 +90,6 @@ export default function CollectModal({ open, onClose }: Props) {
       alert('Please fill in Disease, State and Location.');
       return;
     }
-
     setSaving(true);
 
     if (!isOnline) {
@@ -106,7 +104,6 @@ export default function CollectModal({ open, onClose }: Props) {
     try {
       const supabase = getSupabase();
 
-      // Get or create location
       let locationId: string | null = null;
       const { data: existingLoc } = await supabase
         .from('locations')
@@ -212,8 +209,11 @@ export default function CollectModal({ open, onClose }: Props) {
     alert(`${synced} of ${queue.length} records synced successfully.`);
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+  // Always call hooks before any conditional return
+  if (!open) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
 
         {/* Header */}
@@ -397,6 +397,7 @@ export default function CollectModal({ open, onClose }: Props) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
