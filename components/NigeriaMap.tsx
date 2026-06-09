@@ -20,7 +20,6 @@ const SECTOR_COLORS: Record<string, string> = {
 const NIGERIA_CENTER: [number, number] = [9.0820, 8.6753];
 const NIGERIA_ZOOM = 6;
 
-// Nigerian states with coordinates for choropleth circles
 const NIGERIA_STATES = [
   { name: 'Abia',        lat: 5.4527,  lng: 7.5248  },
   { name: 'Adamawa',     lat: 9.3265,  lng: 12.3984 },
@@ -102,12 +101,12 @@ export default function NigeriaMap({ outbreaks }: Props) {
   const markersRef  = useRef<any[]>([]);
   const choroRef    = useRef<any[]>([]);
 
-  const [disease,      setDisease]      = useState<Disease>('all');
-  const [sector,       setSector]       = useState<Sector>('all');
-  const [showHeat,     setShowHeat]     = useState(false);
-  const [showLayers,   setShowLayers]   = useState(true);
+  const [disease,        setDisease]        = useState<Disease>('all');
+  const [sector,         setSector]         = useState<Sector>('all');
+  const [showHeat,       setShowHeat]       = useState(false);
+  const [showLayers,     setShowLayers]     = useState(true);
   const [showChoropleth, setShowChoropleth] = useState(false);
-  const [ready,        setReady]        = useState(false);
+  const [ready,          setReady]          = useState(false);
 
   const diseaseOptions = ['all', ...Array.from(new Set(outbreaks.map(o => o.disease))).sort()];
 
@@ -155,12 +154,9 @@ export default function NigeriaMap({ outbreaks }: Props) {
     if (!ready || !leafletRef.current) return;
     const { L, map } = leafletRef.current;
 
-    // Clear markers
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
     if (heatRef.current) { heatRef.current.remove(); heatRef.current = null; }
-
-    // Clear choropleth
     choroRef.current.forEach(c => c.remove());
     choroRef.current = [];
 
@@ -170,7 +166,6 @@ export default function NigeriaMap({ outbreaks }: Props) {
       return diseaseMatch && sectorMatch;
     });
 
-    // ── Choropleth layer ──────────────────────────────────────────
     if (showChoropleth) {
       NIGERIA_STATES.forEach(state => {
         const count = filtered.filter(o =>
@@ -196,7 +191,6 @@ export default function NigeriaMap({ outbreaks }: Props) {
       });
     }
 
-    // ── Heatmap layer ─────────────────────────────────────────────
     if (showHeat) {
       const heatPoints = filtered.map(o => {
         const intensity = o.severity === 'critical' ? 1.0 : o.severity === 'high' ? 0.7 : 0.4;
@@ -211,7 +205,6 @@ export default function NigeriaMap({ outbreaks }: Props) {
       }).addTo(map);
     }
 
-    // ── Outbreak markers ─────────────────────────────────────────
     if (showLayers) {
       filtered.forEach(o => {
         if (!o.latitude || !o.longitude) return;
@@ -294,8 +287,8 @@ export default function NigeriaMap({ outbreaks }: Props) {
         <span className="ml-auto text-xs text-gray-400">{filteredCount} event(s) shown</span>
       </div>
 
-      {/* Map */}
-      <div ref={mapRef} style={{ height: '480px', width: '100%' }} />
+      {/* Map — isolation:isolate creates a hard stacking context boundary */}
+      <div ref={mapRef} style={{ height: '480px', width: '100%', isolation: 'isolate' }} />
 
       {/* Legend */}
       <div className="flex flex-wrap gap-4 px-4 py-2.5 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
@@ -309,11 +302,11 @@ export default function NigeriaMap({ outbreaks }: Props) {
           <div className="flex items-center gap-2 ml-2 border-l border-gray-200 dark:border-gray-700 pl-2">
             <span className="text-xs text-gray-400">Choropleth:</span>
             {[
-              { label: '0', color: 'rgba(200,200,200,0.4)' },
-              { label: '1', color: 'rgba(254,229,217,0.8)' },
-              { label: '2', color: 'rgba(252,174,145,0.8)' },
-              { label: '3', color: 'rgba(251,106,74,0.8)'  },
-              { label: '4+', color: 'rgba(203,24,29,0.8)'  },
+              { label: '0',  color: 'rgba(200,200,200,0.4)' },
+              { label: '1',  color: 'rgba(254,229,217,0.8)' },
+              { label: '2',  color: 'rgba(252,174,145,0.8)' },
+              { label: '3',  color: 'rgba(251,106,74,0.8)'  },
+              { label: '4+', color: 'rgba(203,24,29,0.8)'   },
             ].map(({ label, color }) => (
               <div key={label} className="flex items-center gap-1 text-xs text-gray-500">
                 <span className="w-3 h-3 rounded-full inline-block border border-gray-300" style={{ background: color }} />
