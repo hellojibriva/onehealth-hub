@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X, WifiOff, Wifi, Send, ClipboardList } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from '@/lib/supabaseClient';
 
 interface FormData {
   disease_name:    string;
@@ -41,13 +41,6 @@ const NIGERIA_STATES = [
 ];
 
 const OFFLINE_KEY = 'onehealth_offline_queue';
-
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
 
 function getQueue(): FormData[] {
   try {
@@ -106,7 +99,6 @@ export default function CollectModal({ open, onClose }: Props) {
     try {
       const supabase = getSupabase();
 
-      // Get or create location
       let locationId: string | null = null;
       const { data: existingLoc } = await supabase
         .from('locations')
@@ -216,7 +208,6 @@ export default function CollectModal({ open, onClose }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
 
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
           <div className="flex items-center gap-2">
             <ClipboardList size={16} className="text-teal-600" />
@@ -245,7 +236,6 @@ export default function CollectModal({ open, onClose }: Props) {
           </div>
         </div>
 
-        {/* Form */}
         <div className="px-6 py-5 space-y-4">
           {!isOnline && (
             <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">

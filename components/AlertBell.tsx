@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Bell } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from '@/lib/supabaseClient';
 
 interface Alert {
   id:          string;
@@ -27,13 +27,6 @@ function timeAgo(iso: string) {
   return `${Math.floor(diffHrs / 24)}d ago`;
 }
 
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
-
 export default function AlertBell() {
   const [alerts,  setAlerts]  = useState<Alert[]>([]);
   const [open,    setOpen]    = useState(false);
@@ -43,8 +36,9 @@ export default function AlertBell() {
   const unreadCount = alerts.filter(a => !a.is_read).length;
 
   useEffect(() => {
+    const supabase = getSupabase();
+
     async function fetchAlerts() {
-      const supabase = getSupabase();
       const { data } = await supabase
         .from('alerts')
         .select('*')
@@ -55,8 +49,6 @@ export default function AlertBell() {
     }
     fetchAlerts();
 
-    // Real-time subscription
-    const supabase = getSupabase();
     const channel = supabase
       .channel('alerts-realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts' },
@@ -69,7 +61,6 @@ export default function AlertBell() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -88,7 +79,6 @@ export default function AlertBell() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Bell button */}
       <button
         onClick={() => setOpen(v => !v)}
         className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -102,10 +92,8 @@ export default function AlertBell() {
         )}
       </button>
 
-      {/* Dropdown */}
       {open && (
         <div className="absolute right-0 top-10 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-50 overflow-hidden">
-          {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Alerts {unreadCount > 0 && <span className="text-red-500">({unreadCount} unread)</span>}
@@ -120,7 +108,6 @@ export default function AlertBell() {
             )}
           </div>
 
-          {/* Alert list */}
           <div className="max-h-80 overflow-y-auto">
             {loading && (
               <div className="p-4 text-sm text-gray-400 text-center">Loading...</div>

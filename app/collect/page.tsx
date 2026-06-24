@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { WifiOff, Wifi, Send, ClipboardList } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from '@/lib/supabaseClient';
 
 interface FormData {
   disease_name:  string;
@@ -41,13 +41,6 @@ const NIGERIA_STATES = [
 ];
 
 const OFFLINE_KEY = 'onehealth_offline_queue';
-
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
 
 function getQueue(): FormData[] {
   try { return JSON.parse(localStorage.getItem(OFFLINE_KEY) ?? '[]'); }
@@ -185,7 +178,6 @@ export default function CollectPage() {
     <main className="min-h-screen bg-gray-50 dark:bg-gray-950 px-4 py-8">
       <div className="max-w-lg mx-auto">
 
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -208,7 +200,6 @@ export default function CollectPage() {
           </div>
         </div>
 
-        {/* Offline banner */}
         {!isOnline && (
           <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 mb-4">
             <WifiOff size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
@@ -218,7 +209,6 @@ export default function CollectPage() {
           </div>
         )}
 
-        {/* Pending sync banner */}
         {queueLen > 0 && isOnline && (
           <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 mb-4">
             <p className="text-xs text-blue-700 dark:text-blue-400">
@@ -234,7 +224,6 @@ export default function CollectPage() {
           </div>
         )}
 
-        {/* Form card */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 space-y-4">
 
           <div>
