@@ -97,14 +97,14 @@ export default function CollectPage() {
         locationId = (existingLoc as any).id;
       } else {
         const { data: newLoc } = await supabase
-          .from('locations')
-          .insert({
-            name: form.location_name, state: form.state,
-            lga: form.lga || null, geopolitical_zone: '',
-            latitude:  parseFloat(form.latitude)  || 9.082,
-            longitude: parseFloat(form.longitude) || 8.675,
-          })
-          .select('id').single();
+  .from('locations')
+  .insert({
+    name: form.location_name, state: form.state,
+    lga: form.lga || null, geopolitical_zone: '',
+    latitude:  parseFloat(form.latitude)  || 9.082,
+    longitude: parseFloat(form.longitude) || 8.675,
+  } as any)
+  .select('id').single();
         locationId = newLoc?.id ?? null;
       }
 
