@@ -6,6 +6,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, Legend
 } from 'recharts'
+import RCCEAlertBanner from '@/components/RCCEAlertBanner'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,7 +52,6 @@ interface CaseTrend {
 }
 
 // ─── Supabase Client ──────────────────────────────────────────────────────────
-// In production, move this to src/lib/supabase.ts and import it
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -97,11 +97,65 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [sectorFilter, setSectorFilter] = useState<Sector>('ALL')
   const [activeTab, setActiveTab] = useState<'outbreaks' | 'trends' | 'alerts'>('outbreaks')
+  const [userZone, setUserZone] = useState<string | undefined>(undefined)
 
   // ── Fetch data ──────────────────────────────────────────────────────────────
   useEffect(() => {
     async function fetchAll() {
       setLoading(true)
+
+      // Fetch user zone from profiles
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('state')
+          .eq('id', user.id)
+          .single()
+        if (profile?.state) {
+          const zoneMap: Record<string, string> = {
+            'FCT': 'North Central',
+            'Nasarawa': 'North Central',
+            'Niger': 'North Central',
+            'Benue': 'North Central',
+            'Kogi': 'North Central',
+            'Kwara': 'North Central',
+            'Plateau': 'North Central',
+            'Lagos': 'South West',
+            'Ogun': 'South West',
+            'Oyo': 'South West',
+            'Osun': 'South West',
+            'Ondo': 'South West',
+            'Ekiti': 'South West',
+            'Kano': 'North West',
+            'Kaduna': 'North West',
+            'Katsina': 'North West',
+            'Kebbi': 'North West',
+            'Sokoto': 'North West',
+            'Zamfara': 'North West',
+            'Jigawa': 'North West',
+            'Borno': 'North East',
+            'Yobe': 'North East',
+            'Adamawa': 'North East',
+            'Taraba': 'North East',
+            'Bauchi': 'North East',
+            'Gombe': 'North East',
+            'Anambra': 'South East',
+            'Enugu': 'South East',
+            'Imo': 'South East',
+            'Abia': 'South East',
+            'Ebonyi': 'South East',
+            'Rivers': 'South South',
+            'Delta': 'South South',
+            'Edo': 'South South',
+            'Bayelsa': 'South South',
+            'Cross River': 'South South',
+            'Akwa Ibom': 'South South',
+          }
+          setUserZone(zoneMap[profile.state] ?? undefined)
+        }
+      }
+
       const [outbreakRes, alertRes, caseRes] = await Promise.all([
         supabase
           .from('outbreaks')
@@ -122,7 +176,6 @@ export default function DashboardPage() {
       if (outbreakRes.data) setOutbreaks(outbreakRes.data as Outbreak[])
       if (alertRes.data) setAlerts(alertRes.data as Alert[])
       if (caseRes.data) {
-        // Aggregate by date for charting
         const byDate: Record<string, CaseTrend> = {}
         caseRes.data.forEach((c: CaseTrend) => {
           if (!byDate[c.report_date]) {
@@ -140,7 +193,6 @@ export default function DashboardPage() {
 
     fetchAll()
 
-    // Subscribe to realtime alert inserts
     const channel = supabase
       .channel('alerts-realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts' }, (payload) => {
@@ -179,26 +231,37 @@ export default function DashboardPage() {
             </div>
             <div>
               <h1 className="text-white font-semibold text-sm leading-none">OneHealth Hub</h1>
-              <p className="text-slate-400 text-xs mt-0.5">Integrated Zoonotic Disease Surveillance</p>
+              <p className="text-slate-400 text-xs mt-0.5">Integrated Zoonotic Disease Surveillance · Nigeria</p>
             </div>
           </div>
-          {unreadAlerts > 0 && (
-            <span className="bg-red-500/20 text-red-300 border border-red-500/30 text-xs px-2.5 py-1 rounded-full">
-              {unreadAlerts} new alert{unreadAlerts > 1 ? 's' : ''}
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            <a
+              href="/rcce"
+              className="text-xs text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-full transition-colors font-medium"
+            >
+              📣 Community Alerts
+            </a>
+            {unreadAlerts > 0 && (
+              <span className="bg-red-500/20 text-red-300 border border-red-500/30 text-xs px-2.5 py-1 rounded-full">
+                {unreadAlerts} new alert{unreadAlerts > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
 
+        {/* ── RCCE Community Alert Banner ─────────────────────────────────── */}
+        <RCCEAlertBanner userZone={userZone} />
+
         {/* ── Stat cards ─────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Active outbreaks', value: activeCount, accent: 'text-red-400', sub: 'Require immediate action' },
-            { label: 'Critical severity', value: criticalCount, accent: 'text-orange-400', sub: 'Highest priority' },
+            { label: 'Active outbreaks', value: activeCount, accent: 'text-red-400', sub: '+1 this week' },
+            { label: 'Critical severity', value: criticalCount, accent: 'text-orange-400', sub: 'Require action' },
             { label: 'Unread alerts', value: unreadAlerts, accent: 'text-amber-400', sub: 'Pending review' },
-            { label: 'Total tracked', value: outbreaks.length, accent: 'text-emerald-400', sub: 'Across all sectors' },
+            { label: 'Events tracked', value: outbreaks.length, accent: 'text-emerald-400', sub: 'All sectors' },
           ].map((card) => (
             <div key={card.label} className="bg-slate-900 border border-slate-800 rounded-xl p-5">
               <p className="text-slate-400 text-xs mb-1">{card.label}</p>
@@ -210,7 +273,7 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* ── Sector distribution bar chart ──────────────────────────────── */}
+        {/* ── Charts ─────────────────────────────────────────────────────── */}
         <div className="grid md:grid-cols-3 gap-6">
           <div className="md:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-5">
             <h2 className="text-white text-sm font-medium mb-4">Outbreak trends over time</h2>
@@ -278,10 +341,8 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* ── OUTBREAKS TABLE ─────────────────────────────────────────── */}
           {activeTab === 'outbreaks' && (
             <div>
-              {/* Sector filter */}
               <div className="flex gap-2 mb-4 flex-wrap">
                 {(['ALL', 'HUMAN', 'ANIMAL', 'ENVIRONMENTAL'] as const).map((s) => (
                   <button
@@ -340,7 +401,6 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* ── TRENDS PLACEHOLDER ─────────────────────────────────────── */}
           {activeTab === 'trends' && (
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 text-center">
               <p className="text-slate-400 text-sm">Detailed trends view coming in Phase 2.</p>
@@ -348,7 +408,6 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* ── ALERTS FEED ────────────────────────────────────────────── */}
           {activeTab === 'alerts' && (
             <div className="space-y-3">
               {loading ? (

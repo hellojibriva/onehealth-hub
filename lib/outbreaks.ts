@@ -1,16 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from './supabaseClient';
 import type { OutbreakEvent, DashboardStats } from '@/types/outbreak';
-
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      db: { schema: 'public' },
-      auth: { persistSession: false },
-    }
-  );
-}
 export async function getActiveOutbreaks(): Promise<OutbreakEvent[]> {
   try {
     const supabase = getSupabase();
