@@ -94,7 +94,7 @@ export default function CollectPage() {
         .ilike('name', form.location_name).limit(1).single();
 
       if (existingLoc) {
-        locationId = existingLoc.id;
+        locationId = (existingLoc as any).id;
       } else {
         const { data: newLoc } = await supabase
           .from('locations')
