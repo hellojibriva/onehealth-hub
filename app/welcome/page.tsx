@@ -20,14 +20,14 @@ const CONTENT = {
     storyTitle: 'How it works',
     steps: [
       { icon: '🐄', title: 'You see something wrong', desc: 'Your cow is sick. Your chickens are dying. People in your village are falling ill.' },
-      { icon: '📱', title: 'You report it — any phone', desc: 'Dial *384*131# on ANY basic phone. No internet needed. Takes 2 minutes. Free.' },
+      { icon: '📱', title: 'You report it — any phone', desc: 'Dial *384*12032026# on ANY basic phone. No internet needed. Takes 2 minutes. Free.' },
       { icon: '⚡', title: 'Government knows instantly', desc: 'Your report reaches the right officer immediately — no delays, no paperwork.' },
       { icon: '👨‍⚕️', title: 'Help comes to your area', desc: 'A vet officer or health worker is sent to investigate and assist.' },
       { icon: '🔔', title: 'You get warned first', desc: 'Before the next outbreak, you receive a warning in Hausa, Pidgin, Yoruba or Igbo.' },
       { icon: '🌍', title: 'Your community stays safe', desc: 'Early reporting stops disease from spreading across Nigeria.' },
     ],
     ussd: 'No smartphone needed',
-    ussdSub: 'Dial *384*131# on any basic phone',
+    ussdSub: 'Dial *384*12032026# on any basic phone',
     cta1: 'Explore the Platform',
     cta2: 'Give Your Feedback (5 mins)',
     safe: 'Your report is safe and anonymous. No one will take your animals.',
@@ -40,14 +40,14 @@ const CONTENT = {
     storyTitle: 'Yadda yake aiki',
     steps: [
       { icon: '🐄', title: 'Ka ga wani abu mara kyau', desc: 'Shanun ka suna rashin lafiya. Kaji na mutuwa. Mutanen ƙauyenka suna kamu da cuta.' },
-      { icon: '📱', title: 'Ka ba da rahoto — kowane waya', desc: 'Buga *384*131# a KOWANE wayar hannu. Ba a buƙatar intanet. Yana ɗaukar minti 2. Kyauta.' },
+      { icon: '📱', title: 'Ka ba da rahoto — kowane waya', desc: 'Buga *384*12032026# a KOWANE wayar hannu. Ba a buƙatar intanet. Yana ɗaukar minti 2. Kyauta.' },
       { icon: '⚡', title: 'Gwamnati ta san nan take', desc: 'Rahotonka ya kai wurin jami\u2019in da ya dace nan take — babu jinkiri, babu takardu.' },
       { icon: '👨‍⚕️', title: 'Ana aika taimako zuwa yankin ka', desc: 'Ana aika likitan dabbobi ko ma’aikacin lafiya don bincike da taimako.' },
       { icon: '🔔', title: 'Ka sami gargadi da farko', desc: 'Kafin barkewar cutar gaba, za ka karbi gargadi cikin Hausa, Pidgin, Yoruba ko Igbo.' },
       { icon: '🌍', title: 'Al’ummar ka tana cikin aminci', desc: 'Ba da rahoto da wuri yana hana cutar yada ko’ina a Najeriya.' },
     ],
     ussd: 'Ba a buƙatar smartphone',
-    ussdSub: 'Buga *384*131# a kowane wayar yau da kullun',
+    ussdSub: 'Buga *384*12032026# a kowane wayar yau da kullun',
     cta1: 'Bincika Platform din',
     cta2: 'Ba da Ra\u2019ayin Ka (minti 5)',
     safe: 'Rahotonka yana da aminci kuma ba a san wanda ya ba da rahoto ba. Ba za a ƙwace dabbobin ka ba.',
@@ -60,14 +60,14 @@ const CONTENT = {
     storyTitle: 'Bii o ṣe n ṣiṣẹ',
     steps: [
       { icon: '🐄', title: 'O ri nkan ti ko tọ', desc: 'Màlúù rẹ n ṣaisan. Adie rẹ n kú. Eniyan ni abule rẹ n ṣaisan.' },
-      { icon: '📱', title: 'O jabo — foonu eyikeyi', desc: 'Pe *384*131# lori FOONU eyikeyi. Ko nilo intanẹẹti. Gba iṣẹju 2. Ọfẹ.' },
+      { icon: '📱', title: 'O jabo — foonu eyikeyi', desc: 'Pe *384*12032026# lori FOONU eyikeyi. Ko nilo intanẹẹti. Gba iṣẹju 2. Ọfẹ.' },
       { icon: '⚡', title: 'Ijọba mọ lẹsẹkẹsẹ', desc: 'Ijabo rẹ de ọdọ oṣiṣẹ to tọ lẹsẹkẹsẹ — ko si idaduro, ko si iwe.' },
       { icon: '👨‍⚕️', title: 'Iranlọwọ wa si agbegbe rẹ', desc: 'Dokita eranko tabi oṣiṣẹ ilera ni a fi ranṣẹ lati ṣe iwadii ati iranlọwọ.' },
       { icon: '🔔', title: 'O gba ikilowo ni akọkọ', desc: 'Ṣaaju ibesile arun ti o tẹle, iwọ yoo gba ikilowo ni Yoruba, Hausa, Pidgin tabi Igbo.' },
       { icon: '🌍', title: 'Agbegbe rẹ wa ni ailewu', desc: 'Ijabo ni kutukutu da arun lọwọ lati tan kaakiri Naijiria.' },
     ],
     ussd: 'Ko nilo smartphone',
-    ussdSub: 'Pe *384*131# lori foonu ipilẹ eyikeyi',
+    ussdSub: 'Pe *384*12032026# lori foonu ipilẹ eyikeyi',
     cta1: 'Ṣawari Platform naa',
     cta2: 'Fun Wa Ni Ero Rẹ (iṣẹju 5)',
     safe: 'Ijabo rẹ jẹ ailewu ati airi-orukọ. Ko si ẹnikan ti yoo gba eranko rẹ.',
@@ -80,14 +80,14 @@ const CONTENT = {
     storyTitle: 'Otú o si arụ ọrụ',
     steps: [
       { icon: '🐄', title: 'I hụ ihe na-adịghị mma', desc: 'Anụ ehi gị na-arịa ọrịa. Ọkụkọ gị na-anwụ. Ndị mmadụ n\'obodo gị na-arịa ọrịa.' },
-      { icon: '📱', title: 'I kọọ — ekwentị ọ bụla', desc: 'Kpọọ *384*131# na EKWENTỊ ọ bụla. Achọghị ịntanetị. Na-ewe nkeji 2. N\'efu.' },
+      { icon: '📱', title: 'I kọọ — ekwentị ọ bụla', desc: 'Kpọọ *384*12032026# na EKWENTỊ ọ bụla. Achọghị ịntanetị. Na-ewe nkeji 2. N\'efu.' },
       { icon: '⚡', title: 'Gọọmentị maara ozugbo', desc: 'Nkọwa gị ruo n\'aka onye ọrụ kwesịrị ekwesị ozugbo — ọ nweghị ntụgharị, ọ nweghị akwụkwọ.' },
       { icon: '👨‍⚕️', title: 'Enyemaka na-abịa n\'mpaghara gị', desc: 'A na-eziga dọkịta anụmanụ ma ọ bụ onye ọrụ ahụike iji nyochaa ma nyere aka.' },
       { icon: '🔔', title: 'I nata ọkwa nke mbụ', desc: 'Tupu ọrịa ọzọ na-apụta, ị ga-enweta ọkwa n\'Igbo, Hausa, Pidgin ma ọ bụ Yoruba.' },
       { icon: '🌍', title: 'Obodo gị dị na nchekwa', desc: 'Ịkọ n\'oge na-egbochi ọrịa isi na-agbasa n\'ofe Naịjirịa.' },
     ],
     ussd: 'Smartphone achọghị',
-    ussdSub: 'Kpọọ *384*131# na ekwentị ntọala ọ bụla',
+    ussdSub: 'Kpọọ *384*12032026# na ekwentị ntọala ọ bụla',
     cta1: 'Nyochaa Platform ahụ',
     cta2: 'Nye Anyị Echiche Gị (nkeji 5)',
     safe: 'Nkọwa gị dị mma ma anonymous. Ọ dịghị onye ga-ewepụ anụmanụ gị.',
@@ -100,14 +100,14 @@ const CONTENT = {
     storyTitle: 'How e dey work',
     steps: [
       { icon: '🐄', title: 'You see something wrong', desc: 'Your cow dey sick. Your chicken dey die. People for your village dey fall sick.' },
-      { icon: '📱', title: 'You report am — any phone', desc: 'Dial *384*131# on ANY basic phone. You no need internet. E take 2 minutes. E free.' },
+      { icon: '📱', title: 'You report am — any phone', desc: 'Dial *384*12032026# on ANY basic phone. You no need internet. E take 2 minutes. E free.' },
       { icon: '⚡', title: 'Government know immediately', desc: 'Your report reach the right officer immediately — no delay, no paperwork.' },
       { icon: '👨‍⚕️', title: 'Help come to your area', desc: 'Vet officer or health worker go come check and help you.' },
       { icon: '🔔', title: 'You get warning first', desc: 'Before the next outbreak reach your area, you go receive warning in Pidgin, Hausa, Yoruba or Igbo.' },
       { icon: '🌍', title: 'Your community dey safe', desc: 'Early report stop sickness from spreading across Nigeria.' },
     ],
     ussd: 'Smartphone no necessary',
-    ussdSub: 'Dial *384*131# on any ordinary phone',
+    ussdSub: 'Dial *384*12032026# on any ordinary phone',
     cta1: 'See the Platform',
     cta2: 'Give Us Your Feedback (5 mins)',
     safe: 'Your report dey safe and nobody go know your name. Nobody go carry your animal.',
@@ -230,7 +230,7 @@ export default function WelcomePage() {
             📱 {c.ussd}
           </span>
           <span style={{ color: 'white', fontSize: 20, fontWeight: 900, letterSpacing: 2, marginTop: 2 }}>
-            *384*131#
+            *384*12032026#
           </span>
           <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 2 }}>{c.ussdSub}</span>
         </div>
