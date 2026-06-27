@@ -8,8 +8,6 @@ import {
 } from 'recharts'
 import RCCEAlertBanner from '@/components/RCCEAlertBanner'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 type Sector = 'HUMAN' | 'ANIMAL' | 'ENVIRONMENTAL' | 'ALL'
 type Severity = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL' | 'INFO' | 'WARNING'
 type Status = 'ACTIVE' | 'CONTAINED' | 'RESOLVED' | 'MONITORING'
@@ -51,13 +49,10 @@ interface CaseTrend {
   recovered: number
 }
 
-// ─── Supabase Client ──────────────────────────────────────────────────────────
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
-
-// ─── Style helpers ────────────────────────────────────────────────────────────
 
 const sectorColors: Record<string, string> = {
   HUMAN: 'bg-rose-500/20 text-rose-300 border border-rose-500/30',
@@ -88,8 +83,6 @@ const statusDot: Record<string, string> = {
   MONITORING: 'bg-sky-400',
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-
 export default function DashboardPage() {
   const [outbreaks, setOutbreaks] = useState<Outbreak[]>([])
   const [alerts, setAlerts] = useState<Alert[]>([])
@@ -99,12 +92,10 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'outbreaks' | 'trends' | 'alerts'>('outbreaks')
   const [userZone, setUserZone] = useState<string | undefined>(undefined)
 
-  // ── Fetch data ──────────────────────────────────────────────────────────────
   useEffect(() => {
     async function fetchAll() {
       setLoading(true)
 
-      // Fetch user zone from profiles
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: profile } = await supabase
@@ -114,63 +105,27 @@ export default function DashboardPage() {
           .single()
         if (profile?.state) {
           const zoneMap: Record<string, string> = {
-            'FCT': 'North Central',
-            'Nasarawa': 'North Central',
-            'Niger': 'North Central',
-            'Benue': 'North Central',
-            'Kogi': 'North Central',
-            'Kwara': 'North Central',
-            'Plateau': 'North Central',
-            'Lagos': 'South West',
-            'Ogun': 'South West',
-            'Oyo': 'South West',
-            'Osun': 'South West',
-            'Ondo': 'South West',
-            'Ekiti': 'South West',
-            'Kano': 'North West',
-            'Kaduna': 'North West',
-            'Katsina': 'North West',
-            'Kebbi': 'North West',
-            'Sokoto': 'North West',
-            'Zamfara': 'North West',
-            'Jigawa': 'North West',
-            'Borno': 'North East',
-            'Yobe': 'North East',
-            'Adamawa': 'North East',
-            'Taraba': 'North East',
-            'Bauchi': 'North East',
-            'Gombe': 'North East',
-            'Anambra': 'South East',
-            'Enugu': 'South East',
-            'Imo': 'South East',
-            'Abia': 'South East',
-            'Ebonyi': 'South East',
-            'Rivers': 'South South',
-            'Delta': 'South South',
-            'Edo': 'South South',
-            'Bayelsa': 'South South',
-            'Cross River': 'South South',
-            'Akwa Ibom': 'South South',
+            'FCT': 'North Central', 'Nasarawa': 'North Central', 'Niger': 'North Central',
+            'Benue': 'North Central', 'Kogi': 'North Central', 'Kwara': 'North Central', 'Plateau': 'North Central',
+            'Lagos': 'South West', 'Ogun': 'South West', 'Oyo': 'South West',
+            'Osun': 'South West', 'Ondo': 'South West', 'Ekiti': 'South West',
+            'Kano': 'North West', 'Kaduna': 'North West', 'Katsina': 'North West',
+            'Kebbi': 'North West', 'Sokoto': 'North West', 'Zamfara': 'North West', 'Jigawa': 'North West',
+            'Borno': 'North East', 'Yobe': 'North East', 'Adamawa': 'North East',
+            'Taraba': 'North East', 'Bauchi': 'North East', 'Gombe': 'North East',
+            'Anambra': 'South East', 'Enugu': 'South East', 'Imo': 'South East',
+            'Abia': 'South East', 'Ebonyi': 'South East',
+            'Rivers': 'South South', 'Delta': 'South South', 'Edo': 'South South',
+            'Bayelsa': 'South South', 'Cross River': 'South South', 'Akwa Ibom': 'South South',
           }
           setUserZone(zoneMap[profile.state] ?? undefined)
         }
       }
 
       const [outbreakRes, alertRes, caseRes] = await Promise.all([
-        supabase
-          .from('outbreaks')
-          .select('*, locations(*)')
-          .order('start_date', { ascending: false }),
-        supabase
-          .from('alerts')
-          .select('*, outbreaks(disease_name, sector)')
-          .order('created_at', { ascending: false })
-          .limit(10),
-        supabase
-          .from('cases')
-          .select('report_date, confirmed_cases, deaths, recovered')
-          .order('report_date', { ascending: true })
-          .limit(30),
+        supabase.from('outbreaks').select('*, locations(*)').order('start_date', { ascending: false }),
+        supabase.from('alerts').select('*, outbreaks(disease_name, sector)').order('created_at', { ascending: false }).limit(10),
+        supabase.from('cases').select('report_date, confirmed_cases, deaths, recovered').order('report_date', { ascending: true }).limit(30),
       ])
 
       if (outbreakRes.data) setOutbreaks(outbreakRes.data as Outbreak[])
@@ -203,7 +158,6 @@ export default function DashboardPage() {
     return () => { supabase.removeChannel(channel) }
   }, [])
 
-  // ── Derived stats ───────────────────────────────────────────────────────────
   const filtered = sectorFilter === 'ALL' ? outbreaks : outbreaks.filter(o => o.sector === sectorFilter)
   const activeCount = outbreaks.filter(o => o.status === 'ACTIVE').length
   const criticalCount = outbreaks.filter(o => o.severity === 'CRITICAL').length
@@ -218,11 +172,10 @@ export default function DashboardPage() {
     { sector: 'Environmental', count: envCount, fill: '#38bdf8' },
   ]
 
-  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-slate-950">
 
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      {/* Header */}
       <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -241,6 +194,18 @@ export default function DashboardPage() {
             >
               📣 Community Alerts
             </a>
+            <a
+              href="/collect"
+              className="text-xs bg-emerald-500 hover:bg-emerald-400 text-white px-3 py-1.5 rounded-full transition-colors font-semibold"
+            >
+              + Report
+            </a>
+            <a
+              href="/export"
+              className="text-xs text-slate-400 border border-slate-700 hover:bg-slate-800 px-3 py-1.5 rounded-full transition-colors font-medium"
+            >
+              ↓ Export
+            </a>
             {unreadAlerts > 0 && (
               <span className="bg-red-500/20 text-red-300 border border-red-500/30 text-xs px-2.5 py-1 rounded-full">
                 {unreadAlerts} new alert{unreadAlerts > 1 ? 's' : ''}
@@ -252,10 +217,10 @@ export default function DashboardPage() {
 
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
 
-        {/* ── RCCE Community Alert Banner ─────────────────────────────────── */}
+        {/* RCCE Banner */}
         <RCCEAlertBanner userZone={userZone} />
 
-        {/* ── Stat cards ─────────────────────────────────────────────────── */}
+        {/* Stat cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: 'Active outbreaks', value: activeCount, accent: 'text-red-400', sub: '+1 this week' },
@@ -273,7 +238,7 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* ── Charts ─────────────────────────────────────────────────────── */}
+        {/* Charts */}
         <div className="grid md:grid-cols-3 gap-6">
           <div className="md:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-5">
             <h2 className="text-white text-sm font-medium mb-4">Outbreak trends over time</h2>
@@ -321,7 +286,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Tabs ───────────────────────────────────────────────────────── */}
+        {/* Tabs */}
         <div>
           <div className="flex gap-1 bg-slate-900 border border-slate-800 rounded-lg p-1 w-fit mb-6">
             {(['outbreaks', 'trends', 'alerts'] as const).map((tab) => (
@@ -329,9 +294,7 @@ export default function DashboardPage() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-1.5 rounded-md text-sm transition-colors capitalize ${
-                  activeTab === tab
-                    ? 'bg-slate-700 text-white'
-                    : 'text-slate-400 hover:text-slate-300'
+                  activeTab === tab ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-300'
                 }`}
               >
                 {tab} {tab === 'alerts' && unreadAlerts > 0 && (
@@ -366,10 +329,8 @@ export default function DashboardPage() {
               ) : (
                 <div className="space-y-3">
                   {filtered.map((outbreak) => (
-                    <div
-                      key={outbreak.id}
-                      className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl p-5 transition-colors"
-                    >
+                    <div key={outbreak.id}
+                      className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl p-5 transition-colors">
                       <div className="flex items-start justify-between gap-4 flex-wrap">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -416,21 +377,17 @@ export default function DashboardPage() {
                 <div className="text-slate-500 text-sm py-8 text-center">No alerts yet.</div>
               ) : (
                 alerts.map((alert) => (
-                  <div
-                    key={alert.id}
+                  <div key={alert.id}
                     className={`bg-slate-900 border rounded-xl p-5 transition-colors ${
                       alert.is_read ? 'border-slate-800' : 'border-slate-700'
-                    }`}
-                  >
+                    }`}>
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${severityColors[alert.severity]}`}>
                             {alert.severity}
                           </span>
-                          {!alert.is_read && (
-                            <span className="w-2 h-2 bg-red-400 rounded-full" />
-                          )}
+                          {!alert.is_read && <span className="w-2 h-2 bg-red-400 rounded-full" />}
                           {alert.outbreaks && (
                             <span className="text-slate-500 text-xs">{alert.outbreaks.disease_name}</span>
                           )}
@@ -451,7 +408,6 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* ── Footer ─────────────────────────────────────────────────────── */}
         <footer className="border-t border-slate-800 pt-6 text-center">
           <p className="text-slate-600 text-xs">
             OneHealth Hub · Integrated Zoonotic Disease Surveillance · Built with Next.js + Supabase
