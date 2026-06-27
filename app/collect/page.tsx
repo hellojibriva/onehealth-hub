@@ -94,18 +94,18 @@ export default function CollectPage() {
         .ilike('name', form.location_name).limit(1).single();
 
       if (existingLoc) {
-        locationId = (existingLoc as any).id;
+        locationId = (existingLoc as { id: string }).id;
       } else {
         const { data: newLoc } = await supabase
-  .from('locations')
-  .insert({
-    name: form.location_name, state: form.state,
-    lga: form.lga || null, geopolitical_zone: '',
-    latitude:  parseFloat(form.latitude)  || 9.082,
-    longitude: parseFloat(form.longitude) || 8.675,
-  } as any)
-  .select('id').single();
-        locationId = newLoc?.id ?? null;
+          .from('locations')
+          .insert({
+            name: form.location_name, state: form.state,
+            lga: form.lga || null, geopolitical_zone: '',
+            latitude:  parseFloat(form.latitude)  || 9.082,
+            longitude: parseFloat(form.longitude) || 8.675,
+          } as any)
+          .select('id').single();
+        locationId = (newLoc as { id: string } | null)?.id ?? null;
       }
 
       await supabase.from('outbreaks').insert({
@@ -143,7 +143,7 @@ export default function CollectPage() {
           .ilike('name', item.location_name).limit(1).single();
 
         if (existingLoc) {
-          locationId = existingLoc.id;
+          locationId = (existingLoc as { id: string }).id;
         } else {
           const { data: newLoc } = await supabase
             .from('locations')
@@ -152,9 +152,9 @@ export default function CollectPage() {
               lga: item.lga || null, geopolitical_zone: '',
               latitude:  parseFloat(item.latitude)  || 9.082,
               longitude: parseFloat(item.longitude) || 8.675,
-            })
+            } as any)
             .select('id').single();
-          locationId = newLoc?.id ?? null;
+          locationId = (newLoc as { id: string } | null)?.id ?? null;
         }
 
         await supabase.from('outbreaks').insert({
