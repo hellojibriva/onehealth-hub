@@ -73,7 +73,7 @@ export default function AlertBell() {
 
   async function markAllRead() {
     const supabase = getSupabase();
-    await supabase.from('alerts').update({ is_read: true }).eq('is_read', false);
+    await supabase.from('alerts').update({ is_read: true } as any).eq('is_read', false);
     setAlerts(prev => prev.map(a => ({ ...a, is_read: true })));
   }
 
