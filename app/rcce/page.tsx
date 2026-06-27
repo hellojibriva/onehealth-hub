@@ -53,7 +53,7 @@ export default function RCCEPage() {
       .from('rcce_alerts')
       .select('*')
       .order('created_at', { ascending: false })
-    if (data) setAlerts(data)
+    if (data) setAlerts(data as any)
     setLoading(false)
   }
 
@@ -101,9 +101,9 @@ export default function RCCEPage() {
 
     let error
     if (editingId) {
-      ;({ error } = await supabase.from('rcce_alerts').update(payload).eq('id', editingId))
+      ;({ error } = await supabase.from('rcce_alerts').update(payload as any).eq('id', editingId))
     } else {
-      ;({ error } = await supabase.from('rcce_alerts').insert(payload))
+      ;({ error } = await supabase.from('rcce_alerts').insert(payload as any))
     }
 
     setSaving(false)
@@ -142,7 +142,7 @@ export default function RCCEPage() {
 
   async function handleArchive(id: string) {
     const supabase = getSupabase()
-    await supabase.from('rcce_alerts').update({ status: 'ARCHIVED' }).eq('id', id)
+    await supabase.from('rcce_alerts').update({ status: 'ARCHIVED' } as any).eq('id', id)
     fetchAlerts()
     showToast('Alert archived')
   }
@@ -150,7 +150,7 @@ export default function RCCEPage() {
   async function handleSendDirect(id: string) {
     const supabase = getSupabase()
     await supabase.from('rcce_alerts')
-      .update({ status: 'SENT', sent_at: new Date().toISOString() })
+      .update({ status: 'SENT', sent_at: new Date().toISOString() } as any)
       .eq('id', id)
     fetchAlerts()
     showToast('Alert sent!')
@@ -175,7 +175,6 @@ export default function RCCEPage() {
         </div>
       )}
 
-      {/* Page header */}
       <div className="bg-white border-b border-gray-200 px-6 py-5">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-start justify-between">
@@ -208,7 +207,6 @@ export default function RCCEPage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="bg-white border-b border-gray-200 px-6">
         <div className="max-w-5xl mx-auto flex gap-0">
           {([
@@ -233,7 +231,6 @@ export default function RCCEPage() {
 
       <div className="max-w-5xl mx-auto px-6 py-6">
 
-        {/* COMPOSE TAB */}
         {tab === 'compose' && (
           <div className="space-y-6">
             <Section title="Alert Details">
@@ -400,7 +397,6 @@ export default function RCCEPage() {
           </div>
         )}
 
-        {/* MANAGE TAB */}
         {tab === 'manage' && (
           <div>
             <div className="flex gap-3 mb-5">
@@ -496,7 +492,6 @@ export default function RCCEPage() {
           </div>
         )}
 
-        {/* HISTORY TAB */}
         {tab === 'history' && (
           <RCCEDeliveryHistory />
         )}
