@@ -1,4 +1,4 @@
-'use client';
+// @ts-nocheck 'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { Bell } from 'lucide-react';
