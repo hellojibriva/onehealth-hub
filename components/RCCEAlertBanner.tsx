@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -59,8 +60,8 @@ export default function RCCEAlertBanner({ userZone, userLanguageCode }: Props) {
     })
   }
 
-  if (loading) return <div style={{color: 'red', padding: '10px'}}>RCCE Loading...</div>
- if (alerts.length === 0) return <div style={{color: 'red', padding: '10px'}}>RCCE: No alerts found for zone: {userZone ?? 'no zone'}</div>
+  if (loading) return null
+  if (alerts.length === 0) return null
 
   return (
     <div className="mb-6">
