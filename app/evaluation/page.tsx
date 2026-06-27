@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { getSupabase } from '@/lib/supabaseClient'
 
 const NIGERIA_STATES = [
@@ -12,22 +12,87 @@ const NIGERIA_STATES = [
   'Yobe','Zamfara','Outside Nigeria'
 ]
 
-const SCALE = ['1','2','3','4','5']
+const SCALE = ['1', '2', '3', '4', '5']
 
 type Role = 'farmer' | 'professional' | null
 
+// ── INTRO FRAMES ──────────────────────────────────────────────────────────────
+const INTRO_FRAMES = [
+  {
+    icon: '🏥',
+    title: 'What is OneHealth Hub?',
+    desc: 'OneHealth Hub is a digital surveillance platform built for Nigeria. It connects disease reports from farming communities, health facilities, and laboratories in one real-time dashboard — accessible on any phone.',
+    color: '#065f46',
+    bg: '#ecfdf5',
+  },
+  {
+    icon: '🌍',
+    title: 'One Health in Nigeria',
+    desc: 'About 60% of human infectious diseases worldwide originate in animals. In Nigeria — Lassa Fever, Brucellosis, Bird Flu, Rabies — the human-animal-environment link is a daily reality, not a theory.',
+    color: '#1e40af',
+    bg: '#eff6ff',
+  },
+  {
+    icon: '🐄',
+    title: 'The Agriculture Connection',
+    desc: 'Agronomists, animal scientists, veterinary officers, and farmers are often the first to observe zoonotic signals — before any clinic ever sees a patient. Your knowledge is frontline surveillance.',
+    color: '#92400e',
+    bg: '#fffbeb',
+  },
+  {
+    icon: '🌊',
+    title: 'Environment Matters',
+    desc: 'Land use, water contamination, seasonal flooding, and deforestation all drive disease outbreaks. Environmental and agricultural professionals hold data that human health systems never see.',
+    color: '#1e3a5f',
+    bg: '#f0f9ff',
+  },
+  {
+    icon: '📊',
+    title: 'Why This Evaluation',
+    desc: 'Your expertise — whether in animal science, agronomy, public health, or field surveillance — directly shapes how OneHealth Hub is developed and how it integrates with Nigeria\'s national systems.',
+    color: '#6b21a8',
+    bg: '#faf5ff',
+  },
+  {
+    icon: '📋',
+    title: 'How It Works',
+    desc: 'The form takes 5–8 minutes. It starts by asking who you are — farmer or professional — then branches into questions matched to your background. All responses are completely anonymous.',
+    color: '#065f46',
+    bg: '#ecfdf5',
+  },
+]
+
 export default function EvaluationPage() {
+  const [showIntro, setShowIntro] = useState(true)
+  const [introFrame, setIntroFrame] = useState(0)
+  const [animating, setAnimating] = useState(false)
   const [role, setRole] = useState<Role>(null)
   const [step, setStep] = useState(0)
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<Record<string, string>>({})
 
+  // Auto-advance intro
+  useEffect(() => {
+    if (!showIntro) return
+    const interval = setInterval(() => {
+      setAnimating(true)
+      setTimeout(() => {
+        setIntroFrame(f => {
+          if (f >= INTRO_FRAMES.length - 1) return f
+          return f + 1
+        })
+        setAnimating(false)
+      }, 300)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [showIntro])
+
   function set(field: string, value: string) {
     setForm(f => ({ ...f, [field]: value }))
   }
 
-  // ── FARMER STEPS ──────────────────────────────────────────────
+  // ── FARMER STEPS ──────────────────────────────────────────────────────────
   const farmerSteps = [
     {
       title: 'About You',
@@ -40,7 +105,7 @@ export default function EvaluationPage() {
             </select>
           </Q>
           <Q label="What do you do for a living?">
-            {['I farm crops', 'I raise animals (cattle, goats, poultry, pigs)', 'I do both farming and livestock', 'I work in a community / village', 'Other'].map(v => (
+            {['I farm crops', 'I raise animals (cattle, goats, poultry, pigs)', 'I do both farming and livestock', 'I work in a rural community', 'Other'].map(v => (
               <Btn key={v} label={v} selected={form.occupation === v} onClick={() => set('occupation', v)} />
             ))}
           </Q>
@@ -53,7 +118,7 @@ export default function EvaluationPage() {
       )
     },
     {
-      title: 'Reporting Sickness Today',
+      title: 'Reporting Sickness',
       content: (
         <div className="space-y-6">
           <Q label="If one of your animals got sick right now — what would you do first?">
@@ -84,9 +149,11 @@ export default function EvaluationPage() {
       title: 'About This Platform',
       content: (
         <div className="space-y-6">
-          <p className="text-xs text-teal-600 font-medium bg-teal-50 rounded-xl px-4 py-3">
-            Please visit onehealth-hub.vercel.app/welcome to see the platform before answering these questions
-          </p>
+          <div className="rounded-xl px-4 py-3" style={{ background: '#ecfdf5', border: '1px solid #6ee7b7' }}>
+            <p className="text-xs font-medium" style={{ color: '#065f46' }}>
+              Please visit <span className="font-bold">onehealth-hub.vercel.app/welcome</span> to see the platform before answering
+            </p>
+          </div>
           <Q label="Was the platform easy to understand?">
             {['Very easy', 'Easy', 'A little confusing', 'Very confusing', 'I could not open it'].map(v => (
               <Btn key={v} label={v} selected={form.ease_of_use === v} onClick={() => set('ease_of_use', v)} />
@@ -106,11 +173,14 @@ export default function EvaluationPage() {
       )
     },
     {
-      title: 'USSD — Reporting by Phone Call',
+      title: 'USSD — Reporting by Phone',
       content: (
         <div className="space-y-6">
-          <div className="bg-gray-900 text-green-400 font-mono text-xs p-4 rounded-xl leading-relaxed">
-            <p className="text-gray-400 text-[10px] uppercase tracking-widest mb-2">Example USSD screen</p>
+          <div className="rounded-xl p-4 font-mono text-xs leading-relaxed"
+            style={{ background: '#111827', color: '#4ade80' }}>
+            <p style={{ color: '#6b7280', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
+              Example — what you see when you dial
+            </p>
             Welcome to OneHealth Hub{'\n'}
             Pick your language:{'\n'}
             1. English{'\n'}
@@ -135,7 +205,7 @@ export default function EvaluationPage() {
               <Btn key={v} label={v} selected={form.ussd_barrier === v} onClick={() => set('ussd_barrier', v)} />
             ))}
           </Q>
-          <Q label="Would you feel safe that reporting a sick animal here would NOT lead to your animals being taken away?">
+          <Q label="Would you feel safe that reporting a sick animal would NOT lead to your animals being taken away?">
             {['Yes, I would feel safe', 'Maybe', 'Not sure', 'No, I would still be afraid'].map(v => (
               <Btn key={v} label={v} selected={form.feel_safe === v} onClick={() => set('feel_safe', v)} />
             ))}
@@ -158,48 +228,51 @@ export default function EvaluationPage() {
             ))}
           </Q>
           <Q label="What is one thing you would change or add to make this better for farmers?">
-            <textarea
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none min-h-[80px]"
+            <textarea className="Input resize-none min-h-[80px]"
               placeholder="Write here (optional)..."
               value={form.farmer_suggestion ?? ''}
-              onChange={e => set('farmer_suggestion', e.target.value)}
-            />
+              onChange={e => set('farmer_suggestion', e.target.value)} />
           </Q>
         </div>
       )
     },
   ]
 
-  // ── PROFESSIONAL STEPS ────────────────────────────────────────
+  // ── PROFESSIONAL STEPS ────────────────────────────────────────────────────
   const professionalSteps = [
     {
       title: 'About You',
       content: (
         <div className="space-y-6">
-          <Q label="What is your role?">
+          <Q label="What is your professional background?">
             {[
-              'Community Health Worker / CHO',
-              'Veterinary / Livestock Extension Officer',
+              // Public health
               'Disease Surveillance / Epidemiology Officer',
-              'Nurse / Doctor / Lab Scientist',
-              'Agricultural Extension Worker',
-              'B.Agric Graduate (Animal Science, Agronomy, Fisheries, Forestry etc)',
               'Public Health Researcher',
               'Programme / M&E Officer',
               'Policy Maker / Government Official',
+              // Agriculture & environment
+              'Agronomist',
+              'Animal Scientist',
+              'Environmentalist / Environmental Scientist',
+              'Veterinary / Livestock Extension Officer',
+              'Fisheries Officer',
+              'Forestry Officer',
+              'Agricultural Extension Worker',
+              // Other
               'Other',
             ].map(v => (
               <Btn key={v} label={v} selected={form.role === v} onClick={() => set('role', v)} />
             ))}
           </Q>
-          <Q label="What state are you in right now?">
+          <Q label="What state are you in?">
             <select className="Input" value={form.state ?? ''} onChange={e => set('state', e.target.value)}>
               <option value="">Select your state</option>
               {NIGERIA_STATES.map(s => <option key={s}>{s}</option>)}
             </select>
           </Q>
-          <Q label="Have you used any digital disease reporting system before?">
-            {['Yes — SORMAS', 'Yes — DHIS2', 'Yes — another system', 'No, never'].map(v => (
+          <Q label="Have you used any digital disease or agricultural reporting system before?">
+            {['Yes — DHIS2', 'Yes — SORMAS', 'Yes — another system', 'No, never'].map(v => (
               <Btn key={v} label={v} selected={form.used_digital === v} onClick={() => set('used_digital', v)} />
             ))}
           </Q>
@@ -210,7 +283,7 @@ export default function EvaluationPage() {
       title: 'Current Reporting Reality',
       content: (
         <div className="space-y-6">
-          <Q label="How do you currently report disease outbreaks or unusual illness in your work?">
+          <Q label="How do you currently report disease outbreaks or unusual events in your work?">
             {[
               'Paper forms submitted to supervisor',
               'Phone call to supervisor',
@@ -251,9 +324,11 @@ export default function EvaluationPage() {
       title: 'Platform Evaluation',
       content: (
         <div className="space-y-6">
-          <p className="text-xs text-teal-600 font-medium bg-teal-50 rounded-xl px-4 py-3">
-            Please visit onehealth-hub.vercel.app and explore for 3 minutes before rating
-          </p>
+          <div className="rounded-xl px-4 py-3" style={{ background: '#ecfdf5', border: '1px solid #6ee7b7' }}>
+            <p className="text-xs font-medium" style={{ color: '#065f46' }}>
+              Please visit <span className="font-bold">onehealth-hub.vercel.app</span> and explore for 3 minutes before rating
+            </p>
+          </div>
           {[
             { label: 'Overall ease of use', field: 'ease_of_use' },
             { label: 'Dashboard clarity (understanding the data)', field: 'dashboard_clarity' },
@@ -349,15 +424,16 @@ export default function EvaluationPage() {
   // ── SUBMITTED ──
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 to-emerald-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-3xl shadow-xl p-10 max-w-md w-full text-center">
+      <div className="min-h-screen flex items-center justify-center px-4"
+        style={{ background: 'linear-gradient(135deg, #064e3b, #065f46)' }}>
+        <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-md w-full text-center">
           <div className="text-6xl mb-4">🙏</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Thank You!</h2>
           <p className="text-gray-500 text-sm leading-relaxed">
             Your response has been recorded. You are helping to improve disease surveillance across Nigeria and Africa.
           </p>
-          <div className="mt-6 p-4 bg-teal-50 rounded-xl">
-            <p className="text-xs text-teal-700 font-medium">
+          <div className="mt-6 p-4 rounded-xl" style={{ background: '#ecfdf5' }}>
+            <p className="text-xs font-medium" style={{ color: '#065f46' }}>
               OneHealth Hub · Integrated Zoonotic Disease Surveillance · Nigeria
             </p>
           </div>
@@ -366,38 +442,150 @@ export default function EvaluationPage() {
     )
   }
 
+  // ── ANIMATED INTRO ──
+  if (showIntro) {
+    const frame = INTRO_FRAMES[introFrame]
+    const isLast = introFrame === INTRO_FRAMES.length - 1
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8"
+        style={{ background: 'linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%)' }}>
+        <div style={{ maxWidth: 400, width: '100%' }}>
+
+          {/* Logo */}
+          <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: 18,
+              background: 'rgba(255,255,255,0.15)',
+              border: '2px solid rgba(255,255,255,0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 12px', fontSize: 22, fontWeight: 900, color: 'white',
+            }}>1H</div>
+            <h1 style={{ color: 'white', fontSize: 20, fontWeight: 800, margin: 0 }}>
+              OneHealth Hub
+            </h1>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 4 }}>
+              Integrated Zoonotic Disease Surveillance · Nigeria
+            </p>
+          </div>
+
+          {/* Animated frame */}
+          <div style={{
+            background: frame.bg, borderRadius: 24, padding: 28, textAlign: 'center',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            opacity: animating ? 0 : 1,
+            transform: animating ? 'translateY(8px)' : 'translateY(0)',
+            transition: 'all 0.3s',
+            minHeight: 210,
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+          }}>
+            <div style={{ fontSize: 52, marginBottom: 12 }}>{frame.icon}</div>
+            <h2 style={{ fontSize: 19, fontWeight: 800, color: frame.color, margin: '0 0 10px' }}>
+              {frame.title}
+            </h2>
+            <p style={{ fontSize: 13, color: '#374151', lineHeight: 1.7, margin: 0 }}>
+              {frame.desc}
+            </p>
+          </div>
+
+          {/* Progress dots */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, margin: '20px 0' }}>
+            {INTRO_FRAMES.map((_, i) => (
+              <button key={i} onClick={() => setIntroFrame(i)}
+                style={{
+                  width: i === introFrame ? 24 : 8, height: 8,
+                  borderRadius: 4, border: 'none', cursor: 'pointer', padding: 0,
+                  background: i === introFrame ? 'white' : 'rgba(255,255,255,0.3)',
+                  transition: 'all 0.3s',
+                }} />
+            ))}
+          </div>
+
+          {/* Buttons */}
+          {isLast ? (
+            <button onClick={() => setShowIntro(false)}
+              style={{
+                width: '100%', padding: '16px', borderRadius: 18,
+                background: 'white', color: '#065f46',
+                fontWeight: 800, fontSize: 15, border: 'none', cursor: 'pointer',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              }}>
+              Start Evaluation →
+            </button>
+          ) : (
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setShowIntro(false)}
+                style={{
+                  flex: 1, padding: '14px', borderRadius: 16,
+                  background: 'rgba(255,255,255,0.15)', color: 'white',
+                  fontWeight: 600, fontSize: 13,
+                  border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer',
+                }}>
+                Skip
+              </button>
+              <button onClick={() => {
+                setAnimating(true)
+                setTimeout(() => {
+                  setIntroFrame(f => Math.min(f + 1, INTRO_FRAMES.length - 1))
+                  setAnimating(false)
+                }, 300)
+              }}
+                style={{
+                  flex: 2, padding: '14px', borderRadius: 16,
+                  background: 'white', color: '#065f46',
+                  fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer',
+                }}>
+                Next →
+              </button>
+            </div>
+          )}
+
+          <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 16 }}>
+            Tap dots to navigate · Auto-advances every 3 seconds
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   // ── ROLE SELECTION ──
   if (!role) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 to-emerald-50 flex items-center justify-center px-4">
-        <div className="max-w-sm w-full">
+      <div className="min-h-screen flex items-center justify-center px-4"
+        style={{ background: '#f0fdf4' }}>
+        <div style={{ maxWidth: 380, width: '100%' }}>
           <div className="text-center mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-teal-600 flex items-center justify-center mx-auto mb-4">
-              <span className="text-white text-xl font-bold">1H</span>
-            </div>
+            <div style={{
+              width: 56, height: 56, borderRadius: 16,
+              background: '#065f46', display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 12px', fontSize: 20, fontWeight: 900, color: 'white',
+            }}>1H</div>
             <h1 className="text-xl font-bold text-gray-800">OneHealth Hub</h1>
-            <p className="text-sm text-gray-500 mt-1">User Evaluation · Anonymous · 5 minutes</p>
+            <p className="text-sm text-gray-500 mt-1">User Evaluation · Anonymous · 5–8 minutes</p>
           </div>
 
           <div className="bg-white rounded-3xl shadow-lg p-6">
             <p className="text-sm font-bold text-gray-700 mb-4 text-center">Who are you?</p>
             <div className="space-y-3">
-              <button
-                onClick={() => setRole('farmer')}
-                className="w-full py-5 rounded-2xl bg-emerald-50 border-2 border-emerald-100 hover:border-emerald-400 hover:bg-emerald-100 transition-all text-left px-5"
-              >
+              <button onClick={() => setRole('farmer')}
+                className="w-full py-5 rounded-2xl text-left px-5 transition-all"
+                style={{ background: '#f0fdf4', border: '2px solid #bbf7d0' }}
+                onMouseOver={e => e.currentTarget.style.borderColor = '#16a34a'}
+                onMouseOut={e => e.currentTarget.style.borderColor = '#bbf7d0'}>
                 <p className="text-2xl mb-1">🌾</p>
                 <p className="font-bold text-gray-800 text-sm">Farmer / Community Member</p>
                 <p className="text-xs text-gray-500 mt-0.5">I farm, raise animals, or live in a rural community</p>
               </button>
 
-              <button
-                onClick={() => setRole('professional')}
-                className="w-full py-5 rounded-2xl bg-blue-50 border-2 border-blue-100 hover:border-blue-400 hover:bg-blue-100 transition-all text-left px-5"
-              >
-                <p className="text-2xl mb-1">🏥</p>
-                <p className="font-bold text-gray-800 text-sm">Health / Agriculture Professional</p>
-                <p className="text-xs text-gray-500 mt-0.5">Health worker, vet officer, researcher, policy maker, agric graduate</p>
+              <button onClick={() => setRole('professional')}
+                className="w-full py-5 rounded-2xl text-left px-5 transition-all"
+                style={{ background: '#eff6ff', border: '2px solid #bfdbfe' }}
+                onMouseOver={e => e.currentTarget.style.borderColor = '#2563eb'}
+                onMouseOut={e => e.currentTarget.style.borderColor = '#bfdbfe'}>
+                <p className="text-2xl mb-1">🔬</p>
+                <p className="font-bold text-gray-800 text-sm">Agriculture / Public Health Professional</p>
+                <p className="text-xs text-gray-500 mt-0.5">Agronomist, animal scientist, researcher, surveillance officer, policy maker</p>
               </button>
             </div>
           </div>
@@ -414,31 +602,29 @@ export default function EvaluationPage() {
   const currentStep = steps[step]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-emerald-50 px-4 py-8">
+    <div className="min-h-screen px-4 py-8" style={{ background: '#f0fdf4' }}>
       <div className="max-w-xl mx-auto">
 
         <div className="text-center mb-6">
-          <span className="inline-flex items-center gap-2 bg-teal-600 text-white text-xs font-bold px-4 py-1.5 rounded-full">
-            {role === 'farmer' ? '🌾 Farmer Evaluation' : '🏥 Professional Evaluation'}
-          </span>
+          <div className="inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-1.5 rounded-full"
+            style={{ background: role === 'farmer' ? '#065f46' : '#1e40af' }}>
+            {role === 'farmer' ? '🌾 Farmer Evaluation' : '🔬 Professional Evaluation'}
+          </div>
         </div>
 
-        {/* Progress */}
         <div className="bg-white rounded-full h-2 mb-2 overflow-hidden">
-          <div className="h-full bg-teal-500 transition-all duration-500 rounded-full"
-            style={{ width: `${progress}%` }} />
+          <div className="h-full rounded-full transition-all duration-500"
+            style={{ width: `${progress}%`, background: '#065f46' }} />
         </div>
         <p className="text-xs text-center text-gray-400 mb-6">
           Step {step + 1} of {totalSteps}
         </p>
 
-        {/* Card */}
         <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">
           <h2 className="text-lg font-bold text-gray-800 mb-4">{currentStep.title}</h2>
           {currentStep.content}
         </div>
 
-        {/* Navigation */}
         <div className="flex gap-3">
           {step > 0 && (
             <button onClick={() => setStep(s => s - 1)}
@@ -448,12 +634,14 @@ export default function EvaluationPage() {
           )}
           {step < totalSteps - 1 ? (
             <button onClick={() => setStep(s => s + 1)}
-              className="flex-1 py-3 rounded-2xl bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700">
+              className="flex-1 py-3 rounded-2xl text-white text-sm font-semibold"
+              style={{ background: '#065f46' }}>
               Next →
             </button>
           ) : (
             <button onClick={handleSubmit} disabled={saving}
-              className="flex-1 py-3 rounded-2xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50">
+              className="flex-1 py-3 rounded-2xl text-white text-sm font-semibold disabled:opacity-50"
+              style={{ background: '#16a34a' }}>
               {saving ? 'Submitting...' : '✓ Submit'}
             </button>
           )}
@@ -476,8 +664,8 @@ export default function EvaluationPage() {
           outline: none;
         }
         .Input:focus {
-          border-color: #14b8a6;
-          box-shadow: 0 0 0 2px rgba(20,184,166,0.1);
+          border-color: #059669;
+          box-shadow: 0 0 0 2px rgba(5,150,105,0.1);
         }
       `}</style>
     </div>
@@ -497,9 +685,8 @@ function Btn({ label, selected, onClick }: { label: string; selected: boolean; o
   return (
     <button onClick={onClick}
       className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium border-2 transition-all ${
-        selected
-          ? 'border-teal-500 bg-teal-50 text-teal-700'
-          : 'border-gray-100 bg-gray-50 text-gray-600 hover:border-teal-200'
+        selected ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+        : 'border-gray-100 bg-gray-50 text-gray-600 hover:border-emerald-200'
       }`}>
       {selected ? '✓ ' : ''}{label}
     </button>
@@ -513,9 +700,8 @@ function Scale({ value, onChange }: { value: string; onChange: (v: string) => vo
         {SCALE.map(s => (
           <button key={s} onClick={() => onChange(s)}
             className={`flex-1 py-3 rounded-xl text-sm font-bold border-2 transition-all ${
-              value === s
-                ? 'border-teal-500 bg-teal-500 text-white'
-                : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-teal-200'
+              value === s ? 'border-emerald-500 bg-emerald-500 text-white'
+              : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-emerald-200'
             }`}>
             {s}
           </button>
