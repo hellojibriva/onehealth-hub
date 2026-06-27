@@ -18,6 +18,10 @@ interface FormData {
   start_date:    string;
 }
 
+interface LocationRow {
+  id: string;
+}
+
 const EMPTY: FormData = {
   disease_name:  '',
   sector:        'HUMAN',
@@ -94,7 +98,7 @@ export default function CollectPage() {
         .ilike('name', form.location_name).limit(1).single();
 
       if (existingLoc) {
-        locationId = (existingLoc as { id: string }).id;
+        locationId = (existingLoc as unknown as LocationRow).id;
       } else {
         const { data: newLoc } = await supabase
           .from('locations')
@@ -105,7 +109,7 @@ export default function CollectPage() {
             longitude: parseFloat(form.longitude) || 8.675,
           } as any)
           .select('id').single();
-        locationId = (newLoc as { id: string } | null)?.id ?? null;
+        locationId = (newLoc as unknown as LocationRow)?.id ?? null;
       }
 
       await supabase.from('outbreaks').insert({
@@ -114,7 +118,7 @@ export default function CollectPage() {
         location_id: locationId, start_date: form.start_date,
         description: form.description || null,
         reported_by: form.reported_by || null,
-      });
+      } as any);
 
       setSaving(false);
       setSaved(true);
@@ -143,7 +147,7 @@ export default function CollectPage() {
           .ilike('name', item.location_name).limit(1).single();
 
         if (existingLoc) {
-          locationId = (existingLoc as { id: string }).id;
+          locationId = (existingLoc as unknown as LocationRow).id;
         } else {
           const { data: newLoc } = await supabase
             .from('locations')
@@ -154,7 +158,7 @@ export default function CollectPage() {
               longitude: parseFloat(item.longitude) || 8.675,
             } as any)
             .select('id').single();
-          locationId = (newLoc as { id: string } | null)?.id ?? null;
+          locationId = (newLoc as unknown as LocationRow)?.id ?? null;
         }
 
         await supabase.from('outbreaks').insert({
@@ -163,7 +167,7 @@ export default function CollectPage() {
           location_id: locationId, start_date: item.start_date,
           description: item.description || null,
           reported_by: item.reported_by || null,
-        });
+        } as any);
         synced++;
       } catch { continue; }
     }
