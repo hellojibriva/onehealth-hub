@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { getSupabase } from '@/lib/supabaseClient'
 
 const NIGERIA_STATES = [
@@ -25,7 +25,49 @@ const COMMON_DISEASES = [
 
 const SCALE = ['1', '2', '3', '4', '5']
 
+// Animated intro frames
+const INTRO_FRAMES = [
+  {
+    icon: '🌍',
+    title: 'One Health',
+    desc: 'Human, animal, and environmental health are connected. A sick animal today can mean a sick person tomorrow.',
+    color: '#065f46',
+    bg: '#ecfdf5',
+  },
+  {
+    icon: '🐄',
+    title: 'The Animal Link',
+    desc: 'Diseases like Lassa Fever, Brucellosis, and Bird Flu start in animals before reaching humans.',
+    color: '#92400e',
+    bg: '#fffbeb',
+  },
+  {
+    icon: '🌊',
+    title: 'The Environment',
+    desc: 'Contaminated water, flooding, and seasonal changes drive disease outbreaks in communities.',
+    color: '#1e40af',
+    bg: '#eff6ff',
+  },
+  {
+    icon: '🧑‍⚕️',
+    title: 'You Are the Bridge',
+    desc: 'As a health or agriculture professional, you see the connection between sick animals, the environment, and the patients you treat.',
+    color: '#6b21a8',
+    bg: '#faf5ff',
+  },
+  {
+    icon: '💻',
+    title: 'OneHealth Hub',
+    desc: 'A platform built to connect human, animal, and environmental surveillance in one place — starting at the community level.',
+    color: '#065f46',
+    bg: '#ecfdf5',
+  },
+]
+
 export default function PHCEvaluationPage() {
+  const [showIntro, setShowIntro] = useState(true)
+  const [introFrame, setIntroFrame] = useState(0)
+  const [animating, setAnimating] = useState(false)
   const [step, setStep] = useState(0)
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -33,6 +75,22 @@ export default function PHCEvaluationPage() {
     common_diseases: [],
     zoonotic_knowledge: [],
   })
+
+  // Auto-advance intro frames
+  useEffect(() => {
+    if (!showIntro) return
+    const interval = setInterval(() => {
+      setAnimating(true)
+      setTimeout(() => {
+        setIntroFrame(f => {
+          if (f >= INTRO_FRAMES.length - 1) return f
+          return f + 1
+        })
+        setAnimating(false)
+      }, 300)
+    }, 2800)
+    return () => clearInterval(interval)
+  }, [showIntro])
 
   function set(field: string, value: any) {
     setForm(f => ({ ...f, [field]: value }))
@@ -51,22 +109,22 @@ export default function PHCEvaluationPage() {
   }
 
   const steps = [
-    // ── STEP 1: About You ──────────────────────────────────────
     {
       title: 'About You',
       domain: null,
       content: (
         <div className="space-y-6">
-          <Q label="What is your role at the PHC facility?">
+          <Q label="What is your professional background?">
             {[
+              // Health sector
               'Community Health Officer (CHO)',
-              'Community Health Extension Worker (CHEW)',
-              'Junior CHEW',
+              'Community Health Extension Worker (CHEW / Junior CHEW)',
               'Nurse / Midwife',
               'Laboratory Scientist / Technician',
               'Disease Surveillance & Notification Officer (DSNO)',
               'Environmental Health Officer',
-              'Medical Officer',
+              'Medical Officer / Doctor',
+             ,
               'Other',
             ].map(v => <Btn key={v} label={v} selected={form.role === v} onClick={() => set('role', v)} />)}
           </Q>
@@ -76,27 +134,25 @@ export default function PHCEvaluationPage() {
               {NIGERIA_STATES.map(s => <option key={s}>{s}</option>)}
             </select>
           </Q>
-          <Q label="How many years have you worked at a PHC facility?">
+          <Q label="How many years have you worked in your field?">
             {['Less than 1 year', '1–3 years', '4–7 years', '8–15 years', 'More than 15 years'].map(v => (
               <Btn key={v} label={v} selected={form.years_experience === v} onClick={() => set('years_experience', v)} />
             ))}
           </Q>
-          <Q label="Have you ever used any digital disease reporting tool in your work?">
-            {['Yes — DHIS2', 'Yes — SORMAS', 'Yes — another tool', 'No — we use paper forms', 'No — we have no formal reporting system'].map(v => (
+          <Q label="Have you ever used any digital disease or agricultural reporting tool?">
+            {['Yes — DHIS2', 'Yes — SORMAS', 'Yes — another tool', 'No — we use paper forms', 'No — no formal reporting system'].map(v => (
               <Btn key={v} label={v} selected={form.digital_tool_used === v} onClick={() => set('digital_tool_used', v)} />
             ))}
           </Q>
         </div>
       )
     },
-
-    // ── STEP 2: Human Health Domain ────────────────────────────
     {
-      title: 'Human Health — What You See in the Clinic',
+      title: 'Human Health — What You See',
       domain: '🧑‍⚕️ Human Health',
       content: (
         <div className="space-y-6">
-          <Q label="Which diseases do you most commonly diagnose or treat at your facility? (Select all that apply)">
+          <Q label="Which diseases do you most commonly encounter in your work? (Select all that apply)">
             <div className="grid grid-cols-2 gap-2">
               {COMMON_DISEASES.map(v => (
                 <Btn key={v} label={v}
@@ -105,16 +161,16 @@ export default function PHCEvaluationPage() {
               ))}
             </div>
           </Q>
-          <Q label="In the last 6 months, have you treated a patient whose illness you suspected was linked to an animal or the environment?">
+          <Q label="In the last 6 months, have you encountered a case or situation where you suspected the illness or problem was linked to an animal or the environment?">
             {['Yes, more than once', 'Yes, once or twice', 'Not sure', 'No'].map(v => (
               <Btn key={v} label={v} selected={form.suspected_zoonotic === v} onClick={() => set('suspected_zoonotic', v)} />
             ))}
           </Q>
-          <Q label="When you suspect a patient's illness came from an animal or environmental source — what do you currently do?">
+          <Q label="When you suspect a human illness came from an animal or environmental source — what do you currently do?">
             {[
-              'I document it in the patient record only',
+              'I document it in the patient or case record only',
               'I report it to my supervisor',
-              'I report it to the DSNO',
+              'I report it to the DSNO or surveillance officer',
               'I try to contact a vet or livestock officer',
               'Nothing — there is no system for this',
               'Other',
@@ -122,7 +178,7 @@ export default function PHCEvaluationPage() {
               <Btn key={v} label={v} selected={form.zoonotic_action === v} onClick={() => set('zoonotic_action', v)} />
             ))}
           </Q>
-          <Q label="Do you think disease reporting would improve if PHC workers could see animal and environmental data alongside their patient data?">
+          <Q label="Do you think disease detection would improve if human health, animal health, and environmental data were visible on one platform?">
             {['Yes, definitely', 'Probably yes', 'Not sure', 'Probably not', 'No'].map(v => (
               <Btn key={v} label={v} selected={form.integrated_data_value === v} onClick={() => set('integrated_data_value', v)} />
             ))}
@@ -130,34 +186,32 @@ export default function PHCEvaluationPage() {
         </div>
       )
     },
-
-    // ── STEP 3: Animal Health Domain ───────────────────────────
     {
-      title: 'Animal Health — The Connection You Already See',
+      title: 'Animal Health — The Connection',
       domain: '🐄 Animal Health',
       content: (
         <div className="space-y-6">
-          <Q label="Do patients or family members ever mention sick or dying animals when they come to your facility?">
-            {['Yes, frequently', 'Yes, sometimes', 'Rarely', 'Never', 'I have not paid attention to this'].map(v => (
+          <Q label="In your work, do community members or patients ever mention sick or dying animals?">
+            {['Yes, frequently', 'Yes, sometimes', 'Rarely', 'Never', 'Not applicable to my role'].map(v => (
               <Btn key={v} label={v} selected={form.patients_mention_animals === v} onClick={() => set('patients_mention_animals', v)} />
             ))}
           </Q>
-          <Q label="Have you ever seen a cluster of similar illness at your facility that you later connected to a livestock event — such as a market, slaughter, or animal deaths nearby?">
+          <Q label="Have you ever noticed a pattern linking human illness or crop/livestock problems to a specific environmental or animal event nearby?">
             {['Yes', 'I suspected it but could not confirm', 'No', 'Not sure'].map(v => (
               <Btn key={v} label={v} selected={form.cluster_livestock_link === v} onClick={() => set('cluster_livestock_link', v)} />
             ))}
           </Q>
-          <Q label="Do you currently have any formal way to communicate with veterinary or livestock officers when you suspect animal involvement in a human case?">
+          <Q label="Do you currently have any formal way to communicate with the veterinary or human health sector when you suspect a cross-sector disease event?">
             {['Yes, we have a formal channel', 'Sometimes informally', 'No formal channel exists', 'I do not know who to contact'].map(v => (
               <Btn key={v} label={v} selected={form.vet_communication === v} onClick={() => set('vet_communication', v)} />
             ))}
           </Q>
-          <Q label="If you could see real-time reports of sick or dying animals from your community on a dashboard — would it change how you diagnose or investigate cases?">
+          <Q label="If you could see real-time reports of sick or dying animals from your community on a dashboard — would it change how you respond to disease events?">
             {['Yes, significantly', 'Yes, somewhat', 'Not sure', 'Probably not', 'No'].map(v => (
               <Btn key={v} label={v} selected={form.animal_data_impact === v} onClick={() => set('animal_data_impact', v)} />
             ))}
           </Q>
-          <Q label="What percentage of farming households in your catchment area do you think own a basic mobile phone?">
+          <Q label="What percentage of farming households in your area do you think own a basic mobile phone?">
             {['Almost all (>80%)', 'Most (50–80%)', 'Some (20–50%)', 'Few (<20%)', 'I do not know'].map(v => (
               <Btn key={v} label={v} selected={form.phone_ownership_estimate === v} onClick={() => set('phone_ownership_estimate', v)} />
             ))}
@@ -165,25 +219,23 @@ export default function PHCEvaluationPage() {
         </div>
       )
     },
-
-    // ── STEP 4: Environmental Health Domain ────────────────────
     {
-      title: 'Environment — Seasonal and Environmental Disease Drivers',
+      title: 'Environment — Seasonal & Environmental Disease Drivers',
       domain: '🌍 Environmental Health',
       content: (
         <div className="space-y-6">
-          <Q label="In your experience, do environmental or seasonal changes affect the diseases you see at your facility?">
+          <Q label="In your experience, do seasonal or environmental changes affect the diseases or agricultural problems you see?">
             {[
-              'Yes — dry season brings different diseases than rainy season',
-              'Yes — flooding or drought affects disease patterns',
-              'Yes — farming and harvest seasons affect disease patterns',
+              'Yes — dry season brings different patterns than rainy season',
+              'Yes — flooding or drought affects disease or crop/livestock patterns',
+              'Yes — farming and harvest seasons affect patterns',
               'Somewhat',
               'No noticeable pattern',
             ].map(v => (
               <Btn key={v} label={v} selected={form.seasonal_pattern === v} onClick={() => set('seasonal_pattern', v)} />
             ))}
           </Q>
-          <Q label="Have you ever linked a patient's illness to an environmental source — contaminated water, dead animals near a water source, unusual rodent activity, or waste sites?">
+          <Q label="Have you ever linked a human illness, animal death, or crop failure to an environmental source — contaminated water, rodent activity, waste sites, or soil contamination?">
             {['Yes, more than once', 'Yes, once', 'I suspected it but could not confirm', 'No'].map(v => (
               <Btn key={v} label={v} selected={form.environmental_link === v} onClick={() => set('environmental_link', v)} />
             ))}
@@ -193,7 +245,7 @@ export default function PHCEvaluationPage() {
               <Btn key={v} label={v} selected={form.env_reporting_mechanism === v} onClick={() => set('env_reporting_mechanism', v)} />
             ))}
           </Q>
-          <Q label="Would receiving seasonal disease alerts — warning you that Lassa Fever or Cholera risk is elevated in your area this season — help you prepare your facility?">
+          <Q label="Would receiving seasonal disease alerts — warning you that Lassa Fever or Cholera risk is elevated in your area — help you prepare or advise your community?">
             {['Yes, very much', 'Yes, somewhat', 'Not sure', 'Probably not', 'No'].map(v => (
               <Btn key={v} label={v} selected={form.seasonal_alerts_value === v} onClick={() => set('seasonal_alerts_value', v)} />
             ))}
@@ -201,8 +253,6 @@ export default function PHCEvaluationPage() {
         </div>
       )
     },
-
-    // ── STEP 5: Zoonoses Knowledge ─────────────────────────────
     {
       title: 'Zoonoses — Diseases That Cross Between Animals and Humans',
       domain: '🔬 Zoonoses',
@@ -222,17 +272,17 @@ export default function PHCEvaluationPage() {
               <Btn key={v} label={v} selected={form.zoonotic_training === v} onClick={() => set('zoonotic_training', v)} />
             ))}
           </Q>
-          <Q label="Do you think the zoonotic diseases you see at your facility could be detected earlier if there was a system connecting human, animal, and environmental surveillance?">
+          <Q label="Do you think zoonotic diseases in your area could be detected earlier if there was a system connecting human, animal, and environmental surveillance?">
             {['Yes, definitely', 'Probably yes', 'Not sure', 'Probably not', 'No'].map(v => (
               <Btn key={v} label={v} selected={form.integrated_surveillance_value === v} onClick={() => set('integrated_surveillance_value', v)} />
             ))}
           </Q>
-          <Q label="What is the biggest barrier to zoonotic disease detection at your PHC facility right now?">
+          <Q label="What is the biggest barrier to zoonotic disease detection in your area right now?">
             {[
               'No system to connect human and animal health data',
               'No training in zoonotic disease recognition',
               'Farmers do not report sick animals early enough',
-              'No communication channel with veterinary sector',
+              'No communication channel between health and veterinary sectors',
               'No laboratory capacity for confirmation',
               'Other',
             ].map(v => (
@@ -242,16 +292,14 @@ export default function PHCEvaluationPage() {
         </div>
       )
     },
-
-    // ── STEP 6: Platform Evaluation ────────────────────────────
     {
       title: 'OneHealth Hub — Platform Evaluation',
       domain: '💻 Platform',
       content: (
         <div className="space-y-6">
-          <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-xl px-4 py-3 mb-2">
-            <p className="text-emerald-400 text-xs font-medium">
-              Please visit <span className="font-bold">onehealth-hub.vercel.app</span> and explore for 3–5 minutes before rating the platform below.
+          <div className="bg-emerald-900/10 border border-emerald-500/30 rounded-xl px-4 py-3 mb-2">
+            <p className="text-emerald-700 text-xs font-medium">
+              Please visit <span className="font-bold">onehealth-hub.vercel.app</span> and explore for 3–5 minutes before rating below.
             </p>
           </div>
           {[
@@ -261,18 +309,18 @@ export default function PHCEvaluationPage() {
             { label: 'GIS disease map showing outbreak locations', field: 'rate_map' },
             { label: 'Multilingual community alerts (Hausa, Yoruba, Igbo, Pidgin)', field: 'rate_multilingual' },
             { label: 'SORMAS/DHIS2 interoperability concept', field: 'rate_sormas' },
-            { label: 'Offline data capture for areas with poor connectivity', field: 'rate_offline' },
+            { label: 'Offline data capture for low-connectivity areas', field: 'rate_offline' },
           ].map(({ label, field }) => (
             <Q key={field} label={`${label} (1 = Very Poor, 5 = Excellent)`}>
               <Scale value={form[field]} onChange={v => set(field, v)} />
             </Q>
           ))}
-          <Q label="If farmers could report sick animals by dialling a code on any basic phone — without internet — how useful would that be for early disease detection in your catchment area?">
+          <Q label="If farmers could report sick animals by dialling a short code on any basic phone — without internet — how useful would that be for early disease detection in your area?">
             {['Extremely useful', 'Very useful', 'Somewhat useful', 'Not very useful', 'Not useful'].map(v => (
               <Btn key={v} label={v} selected={form.ussd_feasibility === v} onClick={() => set('ussd_feasibility', v)} />
             ))}
           </Q>
-          <Q label="After seeing OneHealth Hub — does it address the human-animal-environment connection you encounter in your daily work?">
+          <Q label="After seeing OneHealth Hub — does it address the human-animal-environment connection you encounter in your work?">
             {['Yes, completely', 'Yes, mostly', 'Partially', 'Not really', 'No'].map(v => (
               <Btn key={v} label={v} selected={form.addresses_oh_gap === v} onClick={() => set('addresses_oh_gap', v)} />
             ))}
@@ -280,21 +328,19 @@ export default function PHCEvaluationPage() {
         </div>
       )
     },
-
-    // ── STEP 7: Policy ─────────────────────────────────────────
     {
       title: 'One Health Policy — Your Opinion',
       domain: '🏛️ Policy',
       content: (
         <div className="space-y-6">
-          <Q label="Should PHC facilities be formally designated as the entry point for One Health surveillance in Nigeria — connecting human, animal, and environmental health reporting?">
+          <Q label="Should primary healthcare facilities be formally designated as the entry point for One Health surveillance in Nigeria — connecting human, animal, and environmental health reporting?">
             {['Strongly agree', 'Agree', 'Not sure', 'Disagree', 'Strongly disagree'].map(v => (
               <Btn key={v} label={v} selected={form.phc_as_entry_point === v} onClick={() => set('phc_as_entry_point', v)} />
             ))}
           </Q>
-          <Q label="Should CHEWs and CHOs receive formal training in zoonotic disease recognition as part of their routine scope of work?">
+          <Q label="Should frontline health and agriculture workers receive formal training in zoonotic disease recognition as part of their routine scope of work?">
             {['Strongly agree', 'Agree', 'Not sure', 'Disagree', 'Strongly disagree'].map(v => (
-              <Btn key={v} label={v} selected={form.chew_zoonotic_training === v} onClick={() => set('chew_zoonotic_training', v)} />
+              <Btn key={v} label={v} selected={form.frontline_zoonotic_training === v} onClick={() => set('frontline_zoonotic_training', v)} />
             ))}
           </Q>
           <Q label="Should verified community disease reports automatically feed into Nigeria's national surveillance system (NCDC/IDSR) after review by a health officer?">
@@ -307,7 +353,7 @@ export default function PHCEvaluationPage() {
               <Btn key={v} label={v} selected={form.national_integration === v} onClick={() => set('national_integration', v)} />
             ))}
           </Q>
-          <Q label="Would you support OneHealth Hub being formally integrated into your PHC facility's disease reporting workflow?">
+          <Q label="Would you support OneHealth Hub being formally integrated into your facility or organisation's disease reporting workflow?">
             {['Definitely yes', 'Probably yes', 'Not sure', 'Probably not', 'Definitely not'].map(v => (
               <Btn key={v} label={v} selected={form.would_adopt === v} onClick={() => set('would_adopt', v)} />
             ))}
@@ -315,20 +361,18 @@ export default function PHCEvaluationPage() {
         </div>
       )
     },
-
-    // ── STEP 8: Open Ended ─────────────────────────────────────
     {
       title: 'Your Experience & Suggestions',
       domain: null,
       content: (
         <div className="space-y-6">
-          <Q label="In your own words — what is the single most valuable thing OneHealth Hub could do for your work as a PHC worker?">
+          <Q label="In your own words — what is the single most valuable thing OneHealth Hub could do for your work?">
             <textarea className="Input resize-none min-h-[90px]"
               placeholder="Write here (optional)..."
               value={form.most_valuable ?? ''}
               onChange={e => set('most_valuable', e.target.value)} />
           </Q>
-          <Q label="What is missing from OneHealth Hub that would make it more useful for detecting zoonotic diseases at PHC level?">
+          <Q label="What is missing from OneHealth Hub that would make it more useful for detecting zoonotic diseases?">
             <textarea className="Input resize-none min-h-[90px]"
               placeholder="Write here (optional)..."
               value={form.what_is_missing ?? ''}
@@ -352,24 +396,26 @@ export default function PHCEvaluationPage() {
       ...form,
       common_diseases: form.common_diseases?.join(', '),
       zoonotic_knowledge: form.zoonotic_knowledge?.join(', '),
-      respondent_type: 'phc_worker',
+      respondent_type: 'one_health_professional',
       submitted_at: new Date().toISOString(),
     })
     setSaving(false)
     setSubmitted(true)
   }
 
+  // ── SUBMITTED ──
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-3xl shadow-xl p-10 max-w-md w-full text-center">
+      <div className="min-h-screen flex items-center justify-center px-4"
+        style={{ background: 'linear-gradient(135deg, #064e3b, #065f46)' }}>
+        <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-md w-full text-center">
           <div className="text-6xl mb-4">🙏</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Thank You!</h2>
           <p className="text-gray-500 text-sm leading-relaxed">
-            Your response has been recorded. Your experience as a PHC worker is invaluable to this research on One Health surveillance in Nigeria.
+            Your response has been recorded. Your professional experience is invaluable to advancing One Health surveillance in Nigeria.
           </p>
-          <div className="mt-6 p-4 bg-emerald-50 rounded-xl">
-            <p className="text-xs text-emerald-700 font-medium">
+          <div className="mt-6 p-4 rounded-xl" style={{ background: '#ecfdf5' }}>
+            <p className="text-xs font-medium" style={{ color: '#065f46' }}>
               OneHealth Hub · Community-Centred One Health Surveillance · Nigeria
             </p>
           </div>
@@ -378,30 +424,119 @@ export default function PHCEvaluationPage() {
     )
   }
 
+  // ── ANIMATED INTRO ──
+  if (showIntro) {
+    const frame = INTRO_FRAMES[introFrame]
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8"
+        style={{ background: 'linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%)' }}>
+        <div style={{ maxWidth: 400, width: '100%' }}>
+
+          {/* Logo */}
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: 18,
+              background: 'rgba(255,255,255,0.15)',
+              border: '2px solid rgba(255,255,255,0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 12px', fontSize: 22, fontWeight: 900, color: 'white',
+            }}>1H</div>
+            <h1 style={{ color: 'white', fontSize: 20, fontWeight: 800, margin: 0 }}>OneHealth Hub</h1>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 4 }}>
+              One Health Evaluation · Human · Animal · Environment
+            </p>
+          </div>
+
+          {/* Animated frame card */}
+          <div style={{
+            background: frame.bg, borderRadius: 24,
+            padding: 28, textAlign: 'center',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            opacity: animating ? 0 : 1,
+            transform: animating ? 'translateY(8px)' : 'translateY(0)',
+            transition: 'all 0.3s',
+            minHeight: 200,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <div style={{ fontSize: 56, marginBottom: 12 }}>{frame.icon}</div>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: frame.color, margin: '0 0 10px' }}>
+              {frame.title}
+            </h2>
+            <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.6, margin: 0 }}>
+              {frame.desc}
+            </p>
+          </div>
+
+          {/* Progress dots */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, margin: '20px 0' }}>
+            {INTRO_FRAMES.map((_, i) => (
+              <button key={i} onClick={() => setIntroFrame(i)}
+                style={{
+                  width: i === introFrame ? 24 : 8, height: 8,
+                  borderRadius: 4, border: 'none', cursor: 'pointer',
+                  background: i === introFrame ? 'white' : 'rgba(255,255,255,0.3)',
+                  transition: 'all 0.3s',
+                }} />
+            ))}
+          </div>
+
+          {/* Skip / Start button */}
+          {introFrame === INTRO_FRAMES.length - 1 ? (
+            <button onClick={() => setShowIntro(false)}
+              style={{
+                width: '100%', padding: '16px', borderRadius: 18,
+                background: 'white', color: '#065f46',
+                fontWeight: 800, fontSize: 15, border: 'none', cursor: 'pointer',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              }}>
+              Start Evaluation →
+            </button>
+          ) : (
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setShowIntro(false)}
+                style={{
+                  flex: 1, padding: '14px', borderRadius: 16,
+                  background: 'rgba(255,255,255,0.15)', color: 'white',
+                  fontWeight: 600, fontSize: 13, border: '1px solid rgba(255,255,255,0.3)',
+                  cursor: 'pointer',
+                }}>
+                Skip intro
+              </button>
+              <button onClick={() => setIntroFrame(f => Math.min(f + 1, INTRO_FRAMES.length - 1))}
+                style={{
+                  flex: 2, padding: '14px', borderRadius: 16,
+                  background: 'white', color: '#065f46',
+                  fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer',
+                }}>
+                Next →
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // ── FORM STEPS ──
   const currentStep = steps[step]
   const progress = (step / steps.length) * 100
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 px-4 py-8">
+    <div className="min-h-screen px-4 py-8" style={{ background: '#f0fdf4' }}>
       <div className="max-w-xl mx-auto">
 
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 bg-emerald-700 text-white text-xs font-bold px-4 py-1.5 rounded-full mb-3">
-            <span>🌍</span> OneHealth Hub — PHC Worker Evaluation
+          <div className="inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-1.5 rounded-full mb-3"
+            style={{ background: '#065f46' }}>
+            <span>🌍</span> OneHealth Hub Evaluation
           </div>
-          <h1 className="text-lg font-bold text-gray-800">
-            One Health Surveillance at PHC Level
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            For community health workers, nurses, DSNOs and PHC staff · Anonymous · 8–10 minutes
-          </p>
         </div>
 
         {/* Progress */}
-        <div className="bg-white rounded-full h-2 mb-2 overflow-hidden shadow-inner">
-          <div className="h-full bg-emerald-600 transition-all duration-500 rounded-full"
-            style={{ width: `${progress}%` }} />
+        <div className="bg-white rounded-full h-2 mb-2 overflow-hidden">
+          <div className="h-full rounded-full transition-all duration-500"
+            style={{ width: `${progress}%`, background: '#065f46' }} />
         </div>
         <p className="text-xs text-center text-gray-400 mb-6">
           Step {step + 1} of {steps.length}
@@ -410,7 +545,8 @@ export default function PHCEvaluationPage() {
         {/* Card */}
         <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">
           {currentStep.domain && (
-            <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full mb-3">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full mb-3"
+              style={{ background: '#ecfdf5', color: '#065f46' }}>
               {currentStep.domain}
             </div>
           )}
@@ -428,19 +564,21 @@ export default function PHCEvaluationPage() {
           )}
           {step < steps.length - 1 ? (
             <button onClick={() => setStep(s => s + 1)}
-              className="flex-1 py-3 rounded-2xl bg-emerald-700 text-white text-sm font-semibold hover:bg-emerald-800">
+              className="flex-1 py-3 rounded-2xl text-white text-sm font-semibold"
+              style={{ background: '#065f46' }}>
               Next →
             </button>
           ) : (
             <button onClick={handleSubmit} disabled={saving}
-              className="flex-1 py-3 rounded-2xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50">
+              className="flex-1 py-3 rounded-2xl text-white text-sm font-semibold disabled:opacity-50"
+              style={{ background: '#16a34a' }}>
               {saving ? 'Submitting...' : '✓ Submit Evaluation'}
             </button>
           )}
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          Anonymous · Community-Centred One Health Surveillance Framework · Nigeria
+          Anonymous · Community-Centred One Health Surveillance · Nigeria
         </p>
       </div>
 
@@ -477,9 +615,8 @@ function Btn({ label, selected, onClick }: { label: string; selected: boolean; o
   return (
     <button onClick={onClick}
       className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium border-2 transition-all ${
-        selected
-          ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-          : 'border-gray-100 bg-gray-50 text-gray-600 hover:border-emerald-200'
+        selected ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+        : 'border-gray-100 bg-gray-50 text-gray-600 hover:border-emerald-200'
       }`}>
       {selected ? '✓ ' : ''}{label}
     </button>
@@ -493,9 +630,8 @@ function Scale({ value, onChange }: { value: string; onChange: (v: string) => vo
         {SCALE.map(s => (
           <button key={s} onClick={() => onChange(s)}
             className={`flex-1 py-3 rounded-xl text-sm font-bold border-2 transition-all ${
-              value === s
-                ? 'border-emerald-500 bg-emerald-500 text-white'
-                : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-emerald-200'
+              value === s ? 'border-emerald-500 bg-emerald-500 text-white'
+              : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-emerald-200'
             }`}>
             {s}
           </button>
