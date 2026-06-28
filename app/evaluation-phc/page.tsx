@@ -408,13 +408,12 @@ export default function PHCEvaluationPage() {
     // Save to Supabase
     await supabase.from('evaluation_responses').insert(payload)
 
-    // Send to Google Sheets
+    // Send to Google Sheets via proxy
     try {
-      await fetch('https://script.google.com/macros/s/AKfycbw_1qIRvYo83-wnqZrcxE-Uha7uj757MzkqhB3Uou_w4oj48b2HLcxducon_xfuwMjv/exec', {
+      await fetch('/api/sheets', {
         method: 'POST',
-        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ record: payload }),
+        body: JSON.stringify(payload),
       })
     } catch (e) {
       console.log('Sheets sync failed silently', e)
