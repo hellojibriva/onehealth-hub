@@ -133,7 +133,7 @@ export default function PHCEvaluationPage() {
             ].map(v => <Btn key={v} label={v} selected={form.role === v} onClick={() => set('role', v)} />)}
           </Q>
           <Q label="What state are you based in?">
-            <select className="Input" value={form.state ?? ''} onChange={e => set('state', e.target.value)}>
+            <select className="Input" style={{ color: "#111827", background: "white" }} value={form.state ?? ''} onChange={e => set('state', e.target.value)}>
               <option value="">Select your state</option>
               {NIGERIA_STATES.map(s => <option key={s}>{s}</option>)}
             </select>
@@ -371,19 +371,19 @@ export default function PHCEvaluationPage() {
       content: (
         <div className="space-y-6">
           <Q label="In your own words — what is the single most valuable thing OneHealth Hub could do for your work?">
-            <textarea className="Input resize-none min-h-[90px]"
+            <textarea className="Input resize-none min-h-[90px]" style={{ color: "#111827", background: "white" }}
               placeholder="Write here (optional)..."
               value={form.most_valuable ?? ''}
               onChange={e => set('most_valuable', e.target.value)} />
           </Q>
           <Q label="What is missing from OneHealth Hub that would make it more useful for detecting zoonotic diseases?">
-            <textarea className="Input resize-none min-h-[90px]"
+            <textarea className="Input resize-none min-h-[90px]" style={{ color: "#111827", background: "white" }}
               placeholder="Write here (optional)..."
               value={form.what_is_missing ?? ''}
               onChange={e => set('what_is_missing', e.target.value)} />
           </Q>
           <Q label="Any other comments or suggestions?">
-            <textarea className="Input resize-none min-h-[80px]"
+            <textarea className="Input resize-none min-h-[80px]" style={{ color: "#111827", background: "white" }}
               placeholder="Write here (optional)..."
               value={form.other_comments ?? ''}
               onChange={e => set('other_comments', e.target.value)} />
@@ -410,7 +410,7 @@ export default function PHCEvaluationPage() {
 
     // Send to Google Sheets via proxy
     try {
-      await fetch('/api/sheets', {
+      await fetch('/api/sheets-phc', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -621,6 +621,7 @@ export default function PHCEvaluationPage() {
           color: #111827 !important;
           background: white !important;
           outline: none;
+          -webkit-text-fill-color: #111827 !important;
         }
         .Input:focus {
           border-color: #059669;
@@ -629,8 +630,14 @@ export default function PHCEvaluationPage() {
         textarea.Input {
           color: #111827 !important;
           background: white !important;
+          -webkit-text-fill-color: #111827 !important;
         }
         select.Input {
+          color: #111827 !important;
+          background: white !important;
+          -webkit-text-fill-color: #111827 !important;
+        }
+        select.Input option {
           color: #111827 !important;
           background: white !important;
         }

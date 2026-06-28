@@ -99,7 +99,7 @@ export default function EvaluationPage() {
       content: (
         <div className="space-y-6">
           <Q label="What state are you in right now?">
-            <select className="Input" value={form.state ?? ''} onChange={e => set('state', e.target.value)}>
+            <select className="Input" style={{ color: "#111827", background: "white" }} value={form.state ?? ''} onChange={e => set('state', e.target.value)}>
               <option value="">Select your state</option>
               {NIGERIA_STATES.map(s => <option key={s}>{s}</option>)}
             </select>
@@ -228,7 +228,7 @@ export default function EvaluationPage() {
             ))}
           </Q>
           <Q label="What is one thing you would change or add to make this better for farmers?">
-            <textarea className="Input resize-none min-h-[80px]"
+            <textarea className="Input resize-none min-h-[80px]" style={{ color: "#111827", background: "white" }}
               placeholder="Write here (optional)..."
               value={form.farmer_suggestion ?? ''}
               onChange={e => set('farmer_suggestion', e.target.value)} />
@@ -266,7 +266,7 @@ export default function EvaluationPage() {
             ))}
           </Q>
           <Q label="What state are you in?">
-            <select className="Input" value={form.state ?? ''} onChange={e => set('state', e.target.value)}>
+            <select className="Input" style={{ color: "#111827", background: "white" }} value={form.state ?? ''} onChange={e => set('state', e.target.value)}>
               <option value="">Select your state</option>
               {NIGERIA_STATES.map(s => <option key={s}>{s}</option>)}
             </select>
@@ -383,19 +383,19 @@ export default function EvaluationPage() {
       content: (
         <div className="space-y-6">
           <Q label="What is OneHealth Hub's biggest advantage over existing tools?">
-            <textarea className="Input resize-none min-h-[80px]"
+            <textarea className="Input resize-none min-h-[80px]" style={{ color: "#111827", background: "white" }}
               placeholder="Write here (optional)..."
               value={form.biggest_advantage ?? ''}
               onChange={e => set('biggest_advantage', e.target.value)} />
           </Q>
           <Q label="What needs to be improved?">
-            <textarea className="Input resize-none min-h-[80px]"
+            <textarea className="Input resize-none min-h-[80px]" style={{ color: "#111827", background: "white" }}
               placeholder="Write here (optional)..."
               value={form.needs_improvement ?? ''}
               onChange={e => set('needs_improvement', e.target.value)} />
           </Q>
           <Q label="Any other comments?">
-            <textarea className="Input resize-none min-h-[80px]"
+            <textarea className="Input resize-none min-h-[80px]" style={{ color: "#111827", background: "white" }}
               placeholder="Write here (optional)..."
               value={form.other_comments ?? ''}
               onChange={e => set('other_comments', e.target.value)} />
@@ -678,6 +678,7 @@ export default function EvaluationPage() {
           color: #111827 !important;
           background: white !important;
           outline: none;
+          -webkit-text-fill-color: #111827 !important;
         }
         .Input:focus {
           border-color: #059669;
@@ -686,8 +687,14 @@ export default function EvaluationPage() {
         textarea.Input {
           color: #111827 !important;
           background: white !important;
+          -webkit-text-fill-color: #111827 !important;
         }
         select.Input {
+          color: #111827 !important;
+          background: white !important;
+          -webkit-text-fill-color: #111827 !important;
+        }
+        select.Input option {
           color: #111827 !important;
           background: white !important;
         }
