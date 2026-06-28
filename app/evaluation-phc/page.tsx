@@ -396,13 +396,30 @@ export default function PHCEvaluationPage() {
   async function handleSubmit() {
     setSaving(true)
     const supabase = getSupabase()
-    await supabase.from('evaluation_responses').insert({
+
+    const payload = {
       ...form,
       common_diseases: form.common_diseases?.join(', '),
       zoonotic_knowledge: form.zoonotic_knowledge?.join(', '),
       respondent_type: 'phc_worker',
       submitted_at: new Date().toISOString(),
-    })
+    }
+
+    // Save to Supabase
+    await supabase.from('evaluation_responses').insert(payload)
+
+    // Send to Google Sheets
+    try {
+      await fetch('https://script.google.com/macros/s/AKfycbw_1qIRvYo83-wnqZrcxE-Uha7uj757MzkqhB3Uou_w4oj48b2HLcxducon_xfuwMjv/exec', {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ record: payload }),
+      })
+    } catch (e) {
+      console.log('Sheets sync failed silently', e)
+    }
+
     setSaving(false)
     setSubmitted(true)
   }
