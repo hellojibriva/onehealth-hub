@@ -80,7 +80,11 @@ export default function PHCEvaluationPage() {
   const [form, setForm] = useState<Record<string, any>>({
     common_diseases: [],
     zoonotic_knowledge: [],
+    farmer_barrier: [],
+    report_delay: [],
   })
+  const [errors, setErrors] = useState<Record<string, boolean>>({})
+  const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
     if (!showIntro) return
@@ -99,11 +103,12 @@ export default function PHCEvaluationPage() {
 
   function set(field: string, value: any) {
     setForm(f => ({ ...f, [field]: value }))
+    setErrors(e => ({ ...e, [field]: false }))
   }
 
   function toggleArray(field: string, value: string) {
     setForm(f => {
-      const arr = f[field] ?? []
+      const arr = Array.isArray(f[field]) ? f[field] : []
       return {
         ...f,
         [field]: arr.includes(value)
@@ -111,6 +116,12 @@ export default function PHCEvaluationPage() {
           : [...arr, value]
       }
     })
+    setErrors(e => ({ ...e, [field]: false }))
+  }
+
+  function showToast(msg: string) {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
   }
 
   const steps = [
@@ -281,7 +292,8 @@ export default function PHCEvaluationPage() {
               <Btn key={v} label={v} selected={form.integrated_surveillance_value === v} onClick={() => set('integrated_surveillance_value', v)} />
             ))}
           </Q>
-          <Q label="What is the biggest barrier to zoonotic disease detection at your facility right now?">
+          <Q label="What are the barriers to zoonotic disease detection at your facility? (Select all that apply)">
+            <p className="text-xs text-gray-400 mb-2">Select all that apply</p>
             {[
               'No system to connect human and animal health data',
               'No training in zoonotic disease recognition',
@@ -290,7 +302,9 @@ export default function PHCEvaluationPage() {
               'No laboratory capacity for confirmation',
               'Other',
             ].map(v => (
-              <Btn key={v} label={v} selected={form.zoonotic_barrier === v} onClick={() => set('zoonotic_barrier', v)} />
+              <Btn key={v} label={v}
+                selected={Array.isArray(form.zoonotic_barrier) ? form.zoonotic_barrier.includes(v) : form.zoonotic_barrier === v}
+                onClick={() => toggleArray('zoonotic_barrier', v)} />
             ))}
           </Q>
         </div>
@@ -399,8 +413,9 @@ export default function PHCEvaluationPage() {
 
     const payload = {
       ...form,
-      common_diseases: form.common_diseases?.join(', '),
-      zoonotic_knowledge: form.zoonotic_knowledge?.join(', '),
+      common_diseases: Array.isArray(form.common_diseases) ? form.common_diseases.join(', ') : form.common_diseases,
+      zoonotic_knowledge: Array.isArray(form.zoonotic_knowledge) ? form.zoonotic_knowledge.join(', ') : form.zoonotic_knowledge,
+      farmer_barrier: Array.isArray(form.farmer_barrier) ? form.farmer_barrier.join(', ') : form.farmer_barrier,
       respondent_type: 'phc_worker',
       submitted_at: new Date().toISOString(),
     }
@@ -557,6 +572,12 @@ export default function PHCEvaluationPage() {
   return (
     <div className="min-h-screen px-4 py-8" style={{ background: '#f0fdf4' }}>
       <div className="max-w-xl mx-auto">
+
+        {toast && (
+          <div className="fixed top-4 left-4 right-4 z-50 bg-red-600 text-white text-sm font-medium px-4 py-3 rounded-xl shadow-lg text-center">
+            ⚠️ {toast}
+          </div>
+        )}
 
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-1.5 rounded-full mb-3"

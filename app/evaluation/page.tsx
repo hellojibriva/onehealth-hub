@@ -70,7 +70,13 @@ export default function EvaluationPage() {
   const [step, setStep] = useState(0)
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState<Record<string, string>>({})
+  const [form, setForm] = useState<Record<string, any>>({
+    report_delay: [],
+    farmer_barrier: [],
+    common_diseases_pro: [],
+  })
+  const [errors, setErrors] = useState<Record<string, boolean>>({})
+  const [toast, setToast] = useState<string | null>(null)
 
   // Auto-advance intro
   useEffect(() => {
@@ -90,6 +96,20 @@ export default function EvaluationPage() {
 
   function set(field: string, value: string) {
     setForm(f => ({ ...f, [field]: value }))
+    setErrors(e => ({ ...e, [field]: false }))
+  }
+
+  function toggleArray(field: string, value: string) {
+    setForm(f => {
+      const arr = Array.isArray(f[field]) ? f[field] : []
+      return {
+        ...f,
+        [field]: arr.includes(value)
+          ? arr.filter((v: string) => v !== value)
+          : [...arr, value]
+      }
+    })
+    setErrors(e => ({ ...e, [field]: false }))
   }
 
   // ── FARMER STEPS ──────────────────────────────────────────────────────────
@@ -295,9 +315,12 @@ export default function EvaluationPage() {
               <Btn key={v} label={v} selected={form.current_method === v} onClick={() => set('current_method', v)} />
             ))}
           </Q>
-          <Q label="After you report, how long does it take for the right person to receive the information?">
+          <Q label="After you report, how long does it take for the right person to receive the information? (Select all that apply)">
+            <p className="text-xs text-gray-400 mb-2">Select all that apply</p>
             {['Same day', '1–3 days', '4–7 days', 'More than one week', 'I do not know'].map(v => (
-              <Btn key={v} label={v} selected={form.report_delay === v} onClick={() => set('report_delay', v)} />
+              <Btn key={v} label={v}
+                selected={Array.isArray(form.report_delay) ? form.report_delay.includes(v) : form.report_delay === v}
+                onClick={() => toggleArray('report_delay', v)} />
             ))}
           </Q>
           <Q label="In your experience, do farmers and community members report sick animals or unusual illness early enough?">
@@ -306,6 +329,7 @@ export default function EvaluationPage() {
             ))}
           </Q>
           <Q label="What is the biggest reason farmers do NOT report sick animals in your area?">
+            <p className="text-xs text-gray-400 mb-2">Select all that apply</p>
             {[
               'Fear their animals will be seized or destroyed',
               'No easy way to report',
@@ -314,7 +338,9 @@ export default function EvaluationPage() {
               'Language barrier',
               'Other',
             ].map(v => (
-              <Btn key={v} label={v} selected={form.farmer_barrier === v} onClick={() => set('farmer_barrier', v)} />
+              <Btn key={v} label={v}
+                selected={Array.isArray(form.farmer_barrier) ? form.farmer_barrier.includes(v) : form.farmer_barrier === v}
+                onClick={() => toggleArray('farmer_barrier', v)} />
             ))}
           </Q>
         </div>
@@ -415,6 +441,8 @@ export default function EvaluationPage() {
 
     const payload = {
       ...form,
+      report_delay: Array.isArray(form.report_delay) ? form.report_delay.join(', ') : form.report_delay,
+      farmer_barrier: Array.isArray(form.farmer_barrier) ? form.farmer_barrier.join(', ') : form.farmer_barrier,
       respondent_type: role,
       submitted_at: new Date().toISOString(),
     }
@@ -621,6 +649,12 @@ export default function EvaluationPage() {
     <div className="min-h-screen px-4 py-8" style={{ background: '#f0fdf4' }}>
       <div className="max-w-xl mx-auto">
 
+        {toast && (
+          <div className="fixed top-4 left-4 right-4 z-50 bg-red-600 text-white text-sm font-medium px-4 py-3 rounded-xl shadow-lg text-center">
+            ⚠️ {toast}
+          </div>
+        )}
+
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-1.5 rounded-full"
             style={{ background: role === 'farmer' ? '#065f46' : '#1e40af' }}>
@@ -649,7 +683,10 @@ export default function EvaluationPage() {
             </button>
           )}
           {step < totalSteps - 1 ? (
-            <button onClick={() => setStep(s => s + 1)}
+            <button onClick={() => {
+              setStep(s => s + 1)
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
               className="flex-1 py-3 rounded-2xl text-white text-sm font-semibold"
               style={{ background: '#065f46' }}>
               Next →
