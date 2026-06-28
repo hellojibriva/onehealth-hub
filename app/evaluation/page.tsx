@@ -675,13 +675,21 @@ export default function EvaluationPage() {
           border-radius: 0.75rem;
           padding: 0.625rem 0.875rem;
           font-size: 0.875rem;
-          color: #111827;
-          background: white;
+          color: #111827 !important;
+          background: white !important;
           outline: none;
         }
         .Input:focus {
           border-color: #059669;
           box-shadow: 0 0 0 2px rgba(5,150,105,0.1);
+        }
+        textarea.Input {
+          color: #111827 !important;
+          background: white !important;
+        }
+        select.Input {
+          color: #111827 !important;
+          background: white !important;
         }
       `}</style>
     </div>
