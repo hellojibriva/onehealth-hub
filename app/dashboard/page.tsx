@@ -10,7 +10,7 @@ import {
 import RCCEAlertBanner from '@/components/RCCEAlertBanner'
 import SORMASExportPanel from '@/components/SORMASExportPanel'
 
-type Sector = 'HUMAN' | 'ANIMAL' | 'ENVIRONMENTAL' | 'ALL'
+type Sector = 'HUMAN' | 'ANIMAL' | 'ENVIRONMENTAL' | 'ZOONOTIC' | 'ALL'
 type Severity = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL' | 'INFO' | 'WARNING'
 type Status = 'ACTIVE' | 'CONTAINED' | 'RESOLVED' | 'MONITORING'
 
@@ -60,6 +60,7 @@ const sectorColors: Record<string, string> = {
   HUMAN: 'bg-rose-500/20 text-rose-300 border border-rose-500/30',
   ANIMAL: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
   ENVIRONMENTAL: 'bg-sky-500/20 text-sky-300 border border-sky-500/30',
+  ZOONOTIC: 'bg-purple-500/20 text-purple-300 border border-purple-500/30',
 }
 
 const severityColors: Record<string, string> = {
@@ -166,12 +167,14 @@ export default function DashboardPage() {
   const humanCount = outbreaks.filter(o => o.sector === 'HUMAN').length
   const animalCount = outbreaks.filter(o => o.sector === 'ANIMAL').length
   const envCount = outbreaks.filter(o => o.sector === 'ENVIRONMENTAL').length
+  const zoonoticCount = outbreaks.filter(o => o.sector === 'ZOONOTIC').length
   const unreadAlerts = alerts.filter(a => !a.is_read).length
 
   const sectorData = [
     { sector: 'Human', count: humanCount, fill: '#f43f5e' },
     { sector: 'Animal', count: animalCount, fill: '#10b981' },
     { sector: 'Environmental', count: envCount, fill: '#38bdf8' },
+    { sector: 'Zoonotic', count: zoonoticCount, fill: '#a855f7' },
   ]
 
   return (
@@ -264,7 +267,7 @@ export default function DashboardPage() {
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
             <h2 className="text-white text-sm font-medium mb-4">By sector</h2>
             <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={sectorData} barSize={32}>
+              <BarChart data={sectorData} barSize={28}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                 <XAxis dataKey="sector" tick={{ fill: '#64748b', fontSize: 11 }} />
                 <YAxis tick={{ fill: '#64748b', fontSize: 11 }} allowDecimals={false} />
@@ -300,7 +303,7 @@ export default function DashboardPage() {
           {activeTab === 'outbreaks' && (
             <div>
               <div className="flex gap-2 mb-4 flex-wrap">
-                {(['ALL', 'HUMAN', 'ANIMAL', 'ENVIRONMENTAL'] as const).map((s) => (
+                {(['ALL', 'HUMAN', 'ANIMAL', 'ENVIRONMENTAL', 'ZOONOTIC'] as const).map((s) => (
                   <button key={s} onClick={() => setSectorFilter(s)}
                     className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                       sectorFilter === s
