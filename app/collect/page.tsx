@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { WifiOff, Wifi, Send, ClipboardList } from 'lucide-react';
+import { WifiOff, Wifi, Send, ClipboardList, MapPin } from 'lucide-react';
 import { getSupabase } from '@/lib/supabaseClient';
 
 interface FormData {
@@ -59,11 +59,31 @@ function saveToQueue(data: FormData) {
 
 function clearQueue() { localStorage.removeItem(OFFLINE_KEY); }
 
+async function geocodeLocation(query: string): Promise<{ lat: string; lon: string } | null> {
+  if (!query.trim()) return null;
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ng&q=${encodeURIComponent(query)}`;
+    const res = await fetch(url, {
+      headers: {
+        'Accept-Language': 'en',
+      },
+    });
+    if (!res.ok) return null;
+    const results = await res.json();
+    if (!Array.isArray(results) || results.length === 0) return null;
+    return { lat: results[0].lat, lon: results[0].lon };
+  } catch {
+    return null;
+  }
+}
+
 export default function CollectPage() {
   const [form,     setForm]     = useState<FormData>(EMPTY);
   const [saving,   setSaving]   = useState(false);
   const [syncing,  setSyncing]  = useState(false);
   const [saved,    setSaved]    = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
+  const [geoNotice, setGeoNotice] = useState<string | null>(null);
   const [queueLen, setQueueLen] = useState(() => getQueue().length);
   const [isOnline, setIsOnline] = useState(() =>
     typeof navigator !== 'undefined' ? navigator.onLine : true
@@ -71,6 +91,29 @@ export default function CollectPage() {
 
   function update(field: keyof FormData, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
+  }
+
+  async function handleLocationBlur() {
+    if (!form.location_name.trim() || !form.state) return;
+    if (form.latitude || form.longitude) return;
+
+    setGeocoding(true);
+    setGeoNotice(null);
+
+    const query = [form.location_name, form.lga, form.state, 'Nigeria']
+      .filter(Boolean)
+      .join(', ');
+
+    const result = await geocodeLocation(query);
+
+    if (result) {
+      setForm(prev => ({ ...prev, latitude: result.lat, longitude: result.lon }));
+      setGeoNotice('Coordinates auto-filled — please confirm they look correct.');
+    } else {
+      setGeoNotice('Could not find coordinates automatically. Please enter them manually if known.');
+    }
+
+    setGeocoding(false);
   }
 
   async function handleSubmit() {
@@ -100,7 +143,7 @@ export default function CollectPage() {
       if (existingLoc) {
         locationId = (existingLoc as unknown as LocationRow).id;
       } else {
-        const { data: newLoc } = await supabase
+        const { data: newLoc, error: locError } = await supabase
           .from('locations')
           .insert({
             name: form.location_name, state: form.state,
@@ -109,10 +152,12 @@ export default function CollectPage() {
             longitude: parseFloat(form.longitude) || 8.675,
           } as any)
           .select('id').single();
+
+        if (locError) throw locError;
         locationId = (newLoc as unknown as LocationRow)?.id ?? null;
       }
 
-      await supabase.from('outbreaks').insert({
+      const { error: outbreakError } = await supabase.from('outbreaks').insert({
         disease_name: form.disease_name, sector: form.sector,
         severity: form.severity, status: 'ACTIVE',
         location_id: locationId, start_date: form.start_date,
@@ -120,15 +165,17 @@ export default function CollectPage() {
         reported_by: form.reported_by || null,
       } as any);
 
+      if (outbreakError) throw outbreakError;
+
       setSaving(false);
       setSaved(true);
-      setTimeout(() => { setSaved(false); setForm(EMPTY); }, 2500);
-    } catch {
+      setTimeout(() => { setSaved(false); setGeoNotice(null); setForm(EMPTY); }, 2500);
+    } catch (err) {
+      console.error('Submission failed:', err);
       saveToQueue(form);
       setQueueLen(getQueue().length);
       setSaving(false);
-      setSaved(true);
-      setTimeout(() => { setSaved(false); setForm(EMPTY); }, 2000);
+      alert('Could not save online — your report was saved locally and will sync when possible.');
     }
   }
 
@@ -149,7 +196,7 @@ export default function CollectPage() {
         if (existingLoc) {
           locationId = (existingLoc as unknown as LocationRow).id;
         } else {
-          const { data: newLoc } = await supabase
+          const { data: newLoc, error: locError } = await supabase
             .from('locations')
             .insert({
               name: item.location_name, state: item.state,
@@ -158,18 +205,25 @@ export default function CollectPage() {
               longitude: parseFloat(item.longitude) || 8.675,
             } as any)
             .select('id').single();
+
+          if (locError) throw locError;
           locationId = (newLoc as unknown as LocationRow)?.id ?? null;
         }
 
-        await supabase.from('outbreaks').insert({
+        const { error: outbreakError } = await supabase.from('outbreaks').insert({
           disease_name: item.disease_name, sector: item.sector,
           severity: item.severity, status: 'ACTIVE',
           location_id: locationId, start_date: item.start_date,
           description: item.description || null,
           reported_by: item.reported_by || null,
         } as any);
+
+        if (outbreakError) throw outbreakError;
         synced++;
-      } catch { continue; }
+      } catch (err) {
+        console.error('Sync failed for item:', item, err);
+        continue;
+      }
     }
 
     if (synced === queue.length) clearQueue();
@@ -276,6 +330,7 @@ export default function CollectPage() {
             <input
               value={form.location_name}
               onChange={e => update('location_name', e.target.value)}
+              onBlur={handleLocationBlur}
               placeholder="e.g. General Hospital Lafia"
               className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
@@ -287,6 +342,7 @@ export default function CollectPage() {
               <select
                 value={form.state}
                 onChange={e => update('state', e.target.value)}
+                onBlur={handleLocationBlur}
                 className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="">Select state</option>
@@ -300,31 +356,52 @@ export default function CollectPage() {
               <input
                 value={form.lga}
                 onChange={e => update('lga', e.target.value)}
+                onBlur={handleLocationBlur}
                 placeholder="e.g. Lafia"
                 className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">Latitude</label>
-              <input
-                value={form.latitude}
-                onChange={e => update('latitude', e.target.value)}
-                placeholder="e.g. 8.5560"
-                className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                Coordinates {geocoding && '(locating…)'}
+              </span>
+              {(form.latitude || form.longitude) && (
+                <button
+                  type="button"
+                  onClick={() => { update('latitude', ''); update('longitude', ''); setGeoNotice(null); }}
+                  className="text-[11px] text-teal-600 hover:underline"
+                >
+                  Clear & re-locate
+                </button>
+              )}
             </div>
-            <div>
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">Longitude</label>
-              <input
-                value={form.longitude}
-                onChange={e => update('longitude', e.target.value)}
-                placeholder="e.g. 8.5227"
-                className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <input
+                  value={form.latitude}
+                  onChange={e => update('latitude', e.target.value)}
+                  placeholder="Latitude, e.g. 8.5560"
+                  className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              <div>
+                <input
+                  value={form.longitude}
+                  onChange={e => update('longitude', e.target.value)}
+                  placeholder="Longitude, e.g. 8.5227"
+                  className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
             </div>
+            {geoNotice && (
+              <p className="flex items-center gap-1 text-[11px] text-gray-500 mt-1.5">
+                <MapPin size={11} className="shrink-0" />
+                {geoNotice}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
