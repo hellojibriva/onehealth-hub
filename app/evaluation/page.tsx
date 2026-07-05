@@ -90,7 +90,7 @@ export default function EvaluationPage() {
         })
         setAnimating(false)
       }, 300)
-    }, 3000)
+    }, 7000)
     return () => clearInterval(interval)
   }, [showIntro])
 
@@ -266,12 +266,10 @@ export default function EvaluationPage() {
         <div className="space-y-6">
           <Q label="What is your professional background?">
             {[
-              // Public health
               'Disease Surveillance / Epidemiology Officer',
               'Public Health Researcher',
               'Programme / M&E Officer',
               'Policy Maker / Government Official',
-              // Agriculture & environment
               'Agronomist',
               'Animal Scientist',
               'Environmentalist / Environmental Scientist',
@@ -279,7 +277,6 @@ export default function EvaluationPage() {
               'Fisheries Officer',
               'Forestry Officer',
               'Agricultural Extension Worker',
-              // Other
               'Other',
             ].map(v => (
               <Btn key={v} label={v} selected={form.role === v} onClick={() => set('role', v)} />
@@ -447,10 +444,8 @@ export default function EvaluationPage() {
       submitted_at: new Date().toISOString(),
     }
 
-    // Save to Supabase
     await supabase.from('evaluation_responses').insert(payload)
 
-    // Send to Google Sheets via proxy
     try {
       await fetch('/api/sheets', {
         method: 'POST',
@@ -465,7 +460,6 @@ export default function EvaluationPage() {
     setSubmitted(true)
   }
 
-  // ── SUBMITTED ──
   if (submitted) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4"
@@ -495,7 +489,6 @@ export default function EvaluationPage() {
         style={{ background: 'linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%)' }}>
         <div style={{ maxWidth: 400, width: '100%' }}>
 
-          {/* Logo */}
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
             <div style={{
               width: 64, height: 64, borderRadius: 18,
@@ -512,7 +505,6 @@ export default function EvaluationPage() {
             </p>
           </div>
 
-          {/* Animated frame */}
           <div style={{
             background: frame.bg, borderRadius: 24, padding: 28, textAlign: 'center',
             boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
@@ -532,7 +524,6 @@ export default function EvaluationPage() {
             </p>
           </div>
 
-          {/* Progress dots */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8, margin: '20px 0' }}>
             {INTRO_FRAMES.map((_, i) => (
               <button key={i} onClick={() => setIntroFrame(i)}
@@ -545,7 +536,6 @@ export default function EvaluationPage() {
             ))}
           </div>
 
-          {/* Buttons */}
           {isLast ? (
             <button onClick={() => setShowIntro(false)}
               style={{
@@ -585,7 +575,7 @@ export default function EvaluationPage() {
           )}
 
           <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 16 }}>
-            Tap dots to navigate · Auto-advances every 3 seconds
+            Tap dots to navigate · Auto-advances every 7 seconds
           </p>
         </div>
       </div>
