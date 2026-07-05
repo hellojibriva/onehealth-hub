@@ -71,6 +71,7 @@ const INTRO_FRAMES = [
 ]
 
 export default function PHCEvaluationPage() {
+  const [showWelcome, setShowWelcome] = useState(true)
   const [showIntro, setShowIntro] = useState(true)
   const [introFrame, setIntroFrame] = useState(0)
   const [animating, setAnimating] = useState(false)
@@ -87,7 +88,7 @@ export default function PHCEvaluationPage() {
   const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!showIntro) return
+    if (!showIntro || showWelcome) return
     const interval = setInterval(() => {
       setAnimating(true)
       setTimeout(() => {
@@ -99,7 +100,7 @@ export default function PHCEvaluationPage() {
       }, 300)
     }, 7000)
     return () => clearInterval(interval)
-  }, [showIntro])
+  }, [showIntro, showWelcome])
 
   function set(field: string, value: any) {
     setForm(f => ({ ...f, [field]: value }))
@@ -451,6 +452,39 @@ export default function PHCEvaluationPage() {
               OneHealth Hub · Integrated Zoonotic Disease Surveillance · Nigeria
             </p>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── WELCOME SCREEN ──
+  if (showWelcome) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8"
+        style={{ background: 'linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%)' }}>
+        <div style={{ maxWidth: 400, width: '100%', textAlign: 'center' }}>
+          <div style={{
+            width: 72, height: 72, borderRadius: 20,
+            background: 'rgba(255,255,255,0.15)',
+            border: '2px solid rgba(255,255,255,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 20px', fontSize: 26, fontWeight: 900, color: 'white',
+          }}>1H</div>
+          <h1 style={{ color: 'white', fontSize: 24, fontWeight: 800, margin: '0 0 8px' }}>
+            Welcome to OneHealth Hub
+          </h1>
+          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.6, marginBottom: 32 }}>
+            Before you begin, take a moment to learn what this platform is and why your evaluation matters.
+          </p>
+          <button onClick={() => setShowWelcome(false)}
+            style={{
+              width: '100%', padding: '16px', borderRadius: 18,
+              background: 'white', color: '#065f46',
+              fontWeight: 800, fontSize: 15, border: 'none', cursor: 'pointer',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+            }}>
+            Continue →
+          </button>
         </div>
       </div>
     )
