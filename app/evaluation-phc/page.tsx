@@ -97,7 +97,7 @@ export default function PHCEvaluationPage() {
         })
         setAnimating(false)
       }, 300)
-    }, 3000)
+    }, 7000)
     return () => clearInterval(interval)
   }, [showIntro])
 
@@ -420,10 +420,8 @@ export default function PHCEvaluationPage() {
       submitted_at: new Date().toISOString(),
     }
 
-    // Save to Supabase
     await supabase.from('evaluation_responses').insert(payload)
 
-    // Send to Google Sheets via proxy
     try {
       await fetch('/api/sheets-phc', {
         method: 'POST',
@@ -467,7 +465,6 @@ export default function PHCEvaluationPage() {
         style={{ background: 'linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%)' }}>
         <div style={{ maxWidth: 400, width: '100%' }}>
 
-          {/* Logo */}
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
             <div style={{
               width: 64, height: 64, borderRadius: 18,
@@ -484,7 +481,6 @@ export default function PHCEvaluationPage() {
             </p>
           </div>
 
-          {/* Animated frame */}
           <div style={{
             background: frame.bg, borderRadius: 24,
             padding: 28, textAlign: 'center',
@@ -505,7 +501,6 @@ export default function PHCEvaluationPage() {
             </p>
           </div>
 
-          {/* Progress dots */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8, margin: '20px 0' }}>
             {INTRO_FRAMES.map((_, i) => (
               <button key={i} onClick={() => setIntroFrame(i)}
@@ -518,7 +513,6 @@ export default function PHCEvaluationPage() {
             ))}
           </div>
 
-          {/* Buttons */}
           {isLast ? (
             <button onClick={() => setShowIntro(false)}
               style={{
@@ -558,7 +552,7 @@ export default function PHCEvaluationPage() {
           )}
 
           <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 16 }}>
-            Tap dots to navigate · Auto-advances every 3 seconds
+            Tap dots to navigate · Auto-advances every 7 seconds
           </p>
         </div>
       </div>
