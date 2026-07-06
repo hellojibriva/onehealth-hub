@@ -8,9 +8,11 @@ interface FormData {
   disease_name:  string;
   sector:        string;
   severity:      string;
+  report_source: string;
   location_name: string;
   state:         string;
   lga:           string;
+  ward:          string;
   latitude:      string;
   longitude:     string;
   description:   string;
@@ -26,9 +28,11 @@ const EMPTY: FormData = {
   disease_name:  '',
   sector:        'HUMAN',
   severity:      'MODERATE',
+  report_source: 'FACILITY',
   location_name: '',
   state:         '',
   lga:           '',
+  ward:          '',
   latitude:      '',
   longitude:     '',
   description:   '',
@@ -64,9 +68,7 @@ async function geocodeLocation(query: string): Promise<{ lat: string; lon: strin
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ng&q=${encodeURIComponent(query)}`;
     const res = await fetch(url, {
-      headers: {
-        'Accept-Language': 'en',
-      },
+      headers: { 'Accept-Language': 'en' },
     });
     if (!res.ok) return null;
     const results = await res.json();
@@ -100,7 +102,7 @@ export default function CollectPage() {
     setGeocoding(true);
     setGeoNotice(null);
 
-    const query = [form.location_name, form.lga, form.state, 'Nigeria']
+    const query = [form.location_name, form.ward, form.lga, form.state, 'Nigeria']
       .filter(Boolean)
       .join(', ');
 
@@ -147,7 +149,8 @@ export default function CollectPage() {
           .from('locations')
           .insert({
             name: form.location_name, state: form.state,
-            lga: form.lga || null, geopolitical_zone: '',
+            lga: form.lga || null, ward: form.ward || null,
+            geopolitical_zone: '',
             latitude:  parseFloat(form.latitude)  || 9.082,
             longitude: parseFloat(form.longitude) || 8.675,
           } as any)
@@ -160,6 +163,7 @@ export default function CollectPage() {
       const { error: outbreakError } = await supabase.from('outbreaks').insert({
         disease_name: form.disease_name, sector: form.sector,
         severity: form.severity, status: 'ACTIVE',
+        report_source: 'FACILITY',
         location_id: locationId, start_date: form.start_date,
         description: form.description || null,
         reported_by: form.reported_by || null,
@@ -200,7 +204,8 @@ export default function CollectPage() {
             .from('locations')
             .insert({
               name: item.location_name, state: item.state,
-              lga: item.lga || null, geopolitical_zone: '',
+              lga: item.lga || null, ward: item.ward || null,
+              geopolitical_zone: '',
               latitude:  parseFloat(item.latitude)  || 9.082,
               longitude: parseFloat(item.longitude) || 8.675,
             } as any)
@@ -213,6 +218,7 @@ export default function CollectPage() {
         const { error: outbreakError } = await supabase.from('outbreaks').insert({
           disease_name: item.disease_name, sector: item.sector,
           severity: item.severity, status: 'ACTIVE',
+          report_source: item.report_source || 'FACILITY',
           location_id: locationId, start_date: item.start_date,
           description: item.description || null,
           reported_by: item.reported_by || null,
@@ -283,6 +289,39 @@ export default function CollectPage() {
         )}
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 space-y-4">
+
+          <div>
+            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">
+              Report source *
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => update('report_source', 'FACILITY')}
+                className={`py-2.5 rounded-lg text-sm font-medium border-2 transition-all ${
+                  form.report_source === 'FACILITY'
+                    ? 'border-teal-500 bg-teal-50 text-teal-700'
+                    : 'border-gray-200 bg-gray-50 text-gray-500'
+                }`}
+              >
+                🏥 Facility
+              </button>
+              <button
+                type="button"
+                onClick={() => update('report_source', 'COMMUNITY')}
+                className={`py-2.5 rounded-lg text-sm font-medium border-2 transition-all ${
+                  form.report_source === 'COMMUNITY'
+                    ? 'border-teal-500 bg-teal-50 text-teal-700'
+                    : 'border-gray-200 bg-gray-50 text-gray-500'
+                }`}
+              >
+                🧑‍🤝‍🧑 Community
+              </button>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-1">
+              Facility = observed at a hospital/clinic/vet post. Community = reported by a resident, farmer, or informal source.
+            </p>
+          </div>
 
           <div>
             <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">
@@ -361,6 +400,17 @@ export default function CollectPage() {
                 className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">Ward</label>
+            <input
+              value={form.ward}
+              onChange={e => update('ward', e.target.value)}
+              onBlur={handleLocationBlur}
+              placeholder="e.g. Lafia Central Ward"
+              className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
           </div>
 
           <div>
