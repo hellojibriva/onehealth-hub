@@ -92,8 +92,6 @@ const LANG_CODE_MAP: Record<string, string> = {
   'EN': 'en', 'HA': 'ha', 'IG': 'ig', 'YO': 'yo', 'PCM': 'pcm'
 }
 
-// Normalizes free-text state entry to a known geopolitical zone.
-// Falls back to the language-based zone guess if the state text doesn't match.
 const STATE_TO_ZONE: Record<string, string> = {
   'fct': 'North Central', 'nasarawa': 'North Central', 'niger': 'North Central',
   'benue': 'North Central', 'kogi': 'North Central', 'kwara': 'North Central', 'plateau': 'North Central',
@@ -135,7 +133,7 @@ async function getLatestAlert(zone: string, langCode: string): Promise<string | 
     .eq('language_code', langCode)
     .order('sent_at', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
 
   if (!data) return null
   if (data.ussd_screen_1) return data.ussd_screen_1
@@ -159,7 +157,7 @@ export async function POST(req: NextRequest) {
     .from('ussd_sessions')
     .select('language')
     .eq('phone_number', phoneNumber)
-    .single()
+    .maybeSingle()
 
   if (session?.language) lang = session.language as LangKey
 
@@ -169,7 +167,7 @@ export async function POST(req: NextRequest) {
       phone_number: phoneNumber,
       session_id: sessionId,
       current_step: 'language',
-    })
+    }, { onConflict: 'phone_number' })
     return new NextResponse(`CON ${MENUS.EN.welcome}`, {
       headers: { 'Content-Type': 'text/plain' },
     })
@@ -186,7 +184,7 @@ export async function POST(req: NextRequest) {
       session_id: sessionId,
       language: lang,
       current_step: 'main_menu',
-    })
+    }, { onConflict: 'phone_number' })
     return new NextResponse(`CON ${MENUS[lang].main}`, {
       headers: { 'Content-Type': 'text/plain' },
     })
@@ -290,7 +288,7 @@ export async function POST(req: NextRequest) {
 
       const { data: existingLoc } = await supabase
         .from('locations').select('id')
-        .ilike('name', townInput).limit(1).single()
+        .ilike('name', townInput).limit(1).maybeSingle()
 
       if (existingLoc) {
         locationId = existingLoc.id
@@ -306,7 +304,7 @@ export async function POST(req: NextRequest) {
             latitude: 9.082,
             longitude: 8.675,
           })
-          .select('id').single()
+          .select('id').maybeSingle()
         locationId = newLoc?.id ?? null
       }
 
