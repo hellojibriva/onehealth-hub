@@ -12,6 +12,11 @@ const MENUS = {
     welcome: `Welcome to OneHealth Hub\nSelect language:\n1. English\n2. Hausa\n3. Igbo\n4. Yoruba\n5. Pidgin`,
     main: `OneHealth Hub\n1. Report outbreak\n2. Disease alerts\n3. Livestock tips\n4. Environmental alerts`,
     report_type: `What are you reporting?\n1. Human illness\n2. Sick animals\n3. Water/environment issue`,
+    ask_state: `Please enter your state:`,
+    ask_location: `Please enter your LGA or town name:`,
+    symptoms_human: `What symptoms?\n1. Fever\n2. Diarrhea/vomiting\n3. Skin rash/sores\n4. Breathing difficulty\n5. Other`,
+    symptoms_animal: `What signs?\n1. Sudden death\n2. Not eating/weak\n3. Skin sores/swelling\n4. Abortion/miscarriage\n5. Other`,
+    symptoms_env: `What issue?\n1. Contaminated water\n2. Flooding\n3. Dead animals near water\n4. Unusual smell/waste\n5. Other`,
     confirm: `Report received. Thank you.\nA OneHealth officer will follow up within 24hrs.\nRef: OH-`,
     no_alerts: `No active alerts for your area right now. Stay safe and report any unusual illness or animal deaths.`,
     tips: `Livestock tip:\nVaccinate poultry against Newcastle disease. Report dead birds immediately to nearest vet.`,
@@ -21,6 +26,11 @@ const MENUS = {
     welcome: `Barka da zuwa OneHealth Hub\nZabi harshe:\n1. Turanci\n2. Hausa\n3. Igbo\n4. Yoruba\n5. Pidgin`,
     main: `OneHealth Hub\n1. Rahoton annoba\n2. Sanarwar cututtuka\n3. Shawarwarin dabbobi\n4. Sanarwar muhalli`,
     report_type: `Me kake rahoto?\n1. Cutar dan adam\n2. Dabbobi marasa lafiya\n3. Matsalar ruwa/muhalli`,
+    ask_state: `Da fatan za a shigar da jihar ku:`,
+    ask_location: `Da fatan za a shigar da unguwar ku ko birni:`,
+    symptoms_human: `Wadanne alamu?\n1. Zazzabi\n2. Gudawa/amai\n3. Kurji/miki a fata\n4. Wahalar numfashi\n5. Wani abu`,
+    symptoms_animal: `Wadanne alamu?\n1. Mutuwa ba zato\n2. Rashin ci/rauni\n3. Miki a fata\n4. Zubar ciki\n5. Wani abu`,
+    symptoms_env: `Wace matsala?\n1. Ruwa mai gurbi\n2. Ambaliya\n3. Dabbobin da suka mutu kusa da ruwa\n4. Wari mara kyau\n5. Wani abu`,
     confirm: `An karbi rahoton. Na gode.\nJami'in OneHealth zai tuntube ka cikin awowi 24.\nRef: OH-`,
     no_alerts: `Babu sanarwa a yankin ka yanzu. Ka kasance lafiya kuma ka ba da rahoto game da duk wata cuta ko mutuwar dabbobi.`,
     tips: `Shawara kan dabbobi:\nAllurar rigakafin kaji daga cutar Newcastle. Kai garkuwa da tsuntsayen da suka mutu nan take.`,
@@ -30,6 +40,11 @@ const MENUS = {
     welcome: `Nnoo na OneHealth Hub\nHoo asuu:\n1. Bekee\n2. Hausa\n3. Igbo\n4. Yoruba\n5. Pidgin`,
     main: `OneHealth Hub\n1. Koo ihe ojoo\n2. Ndeozi oria\n3. Ndumod anumanu\n4. Ndeozi gburugburu`,
     report_type: `Gini ka i na-ako?\n1. Oria mmadu\n2. Anumanu oria\n3. Nsogbu mmiri/gburugburu`,
+    ask_state: `Biko tinye steeti gi:`,
+    ask_location: `Biko tinye LGA ma obu obodo gi:`,
+    symptoms_human: `Gini bu ihe mmadu na-enwe?\n1. Ahuru oku\n2. Afo/iwe\n3. Oria ahu\n4. Ike ikuku\n5. Ozo`,
+    symptoms_animal: `Gini bu ihe anumanu na-enwe?\n1. Onwu na mberede\n2. Adighi eri nri\n3. Oria ahu\n4. Iwepu nwa n'afo\n5. Ozo`,
+    symptoms_env: `Gini bu nsogbu?\n1. Mmiri ruru unyi\n2. Idei mmiri\n3. Anumanu nwuru anwu n'akuku mmiri\n4. Isi ojo\n5. Ozo`,
     confirm: `Anabata akuko. Daalu.\nOji OneHealth ga-akpotu gi n'ime awa 24.\nRef: OH-`,
     no_alerts: `Enweghị ndeozi ọ bụla maka mpaghara gị ugbu a. Nọrọ n'ahụike ma kọọ ọ bụla ọrịa ma ọ bụ ọnwụ anụmanụ.`,
     tips: `Ndumod anumanu:\nTinye ogwu oghere opa megide oria Newcastle. Koo nnunu nwuru anwu ozugbo.`,
@@ -39,6 +54,11 @@ const MENUS = {
     welcome: `Kaabo si OneHealth Hub\nYan ede:\n1. Gesi\n2. Hausa\n3. Igbo\n4. Yoruba\n5. Pidgin`,
     main: `OneHealth Hub\n1. Jabo ajakale\n2. Ikilowo arun\n3. Imoran eranko\n4. Ikilowo ayika`,
     report_type: `Kini o n jabo?\n1. Arun eniyan\n2. Eranko aisan\n3. Isoro omi/ayika`,
+    ask_state: `Jowo tẹ ipinlẹ rẹ sii:`,
+    ask_location: `Jowo tẹ agbegbe tabi ilu rẹ sii:`,
+    symptoms_human: `Awọn aami wo?\n1. Iba\n2. Igbe gburu/eebi\n3. Ara sisu\n4. Isoro emi\n5. Miiran`,
+    symptoms_animal: `Awọn ami wo?\n1. Iku lojiji\n2. Ko je/ailera\n3. Ara sisu\n4. Sisọ oyun\n5. Miiran`,
+    symptoms_env: `Isoro wo?\n1. Omi didoti\n2. Iyalenu\n3. Eranko ti o ku nitosi omi\n4. Oorun aidun\n5. Miiran`,
     confirm: `Ijabo gba. E se.\nOsi OneHealth yoo pe o pada laarin wakati 24.\nRef: OH-`,
     no_alerts: `Ko si ikilowo ti n ṣiṣẹ fun agbegbe rẹ ni bayi. Jẹ ki o wa ni ailewu ki o jabo eyikeyi aisan tabi iku eranko.`,
     tips: `Imoran eranko:\nDaabobo adie lodi si arun Newcastle. Jabo eye ti o ku lesekese si dokita eranko.`,
@@ -48,6 +68,11 @@ const MENUS = {
     welcome: `Welcome to OneHealth Hub\nPick your language:\n1. English\n2. Hausa\n3. Igbo\n4. Yoruba\n5. Pidgin`,
     main: `OneHealth Hub\n1. Report sickness\n2. Health alerts\n3. Animal tips\n4. Water wahala`,
     report_type: `Wetin you wan report?\n1. Person dey sick\n2. Animal dey sick\n3. Water or ground problem`,
+    ask_state: `Abeg enter your state:`,
+    ask_location: `Abeg enter your LGA or town:`,
+    symptoms_human: `Wetin be d symptom?\n1. Fever\n2. Belle run/vomit\n3. Skin rash\n4. Breathing wahala\n5. Other`,
+    symptoms_animal: `Wetin you notice?\n1. E die sudden\n2. E no dey chop/weak\n3. Skin sore\n4. E lose belle\n5. Other`,
+    symptoms_env: `Wetin be d problem?\n1. Water don spoil\n2. Flood\n3. Animal don die near water\n4. Bad smell\n5. Other`,
     confirm: `We don receive your report. Thank you.\nOneHealth officer go call you back within 24hrs.\nRef: OH-`,
     no_alerts: `No active alert for your area now. Stay safe. Report any sick person or dead animal wey you see.`,
     tips: `Animal tip:\nVaccinate your poultry against Newcastle disease. Report any dead bird to vet office quick quick.`,
@@ -65,6 +90,38 @@ const LANG_TO_ZONE: Record<string, string> = {
 
 const LANG_CODE_MAP: Record<string, string> = {
   'EN': 'en', 'HA': 'ha', 'IG': 'ig', 'YO': 'yo', 'PCM': 'pcm'
+}
+
+// Normalizes free-text state entry to a known geopolitical zone.
+// Falls back to the language-based zone guess if the state text doesn't match.
+const STATE_TO_ZONE: Record<string, string> = {
+  'fct': 'North Central', 'nasarawa': 'North Central', 'niger': 'North Central',
+  'benue': 'North Central', 'kogi': 'North Central', 'kwara': 'North Central', 'plateau': 'North Central',
+  'lagos': 'South West', 'ogun': 'South West', 'oyo': 'South West',
+  'osun': 'South West', 'ondo': 'South West', 'ekiti': 'South West',
+  'kano': 'North West', 'kaduna': 'North West', 'katsina': 'North West',
+  'kebbi': 'North West', 'sokoto': 'North West', 'zamfara': 'North West', 'jigawa': 'North West',
+  'borno': 'North East', 'yobe': 'North East', 'adamawa': 'North East',
+  'taraba': 'North East', 'bauchi': 'North East', 'gombe': 'North East',
+  'anambra': 'South East', 'enugu': 'South East', 'imo': 'South East',
+  'abia': 'South East', 'ebonyi': 'South East',
+  'rivers': 'South South', 'delta': 'South South', 'edo': 'South South',
+  'bayelsa': 'South South', 'cross river': 'South South', 'akwa ibom': 'South South',
+}
+
+const SYMPTOM_LABELS: Record<string, Record<string, string>> = {
+  HUMAN: {
+    '1': 'Fever', '2': 'Diarrhea/vomiting', '3': 'Skin rash/sores',
+    '4': 'Breathing difficulty', '5': 'Other (unspecified)',
+  },
+  ANIMAL: {
+    '1': 'Sudden death', '2': 'Not eating/weak', '3': 'Skin sores/swelling',
+    '4': 'Abortion/miscarriage', '5': 'Other (unspecified)',
+  },
+  ENVIRONMENTAL: {
+    '1': 'Contaminated water', '2': 'Flooding', '3': 'Dead animals near water',
+    '4': 'Unusual smell/waste', '5': 'Other (unspecified)',
+  },
 }
 
 type LangKey = 'EN' | 'HA' | 'IG' | 'YO' | 'PCM'
@@ -147,7 +204,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (choice === '2') {
-      // Pull live alert from rcce_alerts
       const zone = LANG_TO_ZONE[lang] ?? 'North Central'
       const langCode = LANG_CODE_MAP[lang] ?? 'en'
       const alertText = await getLatestAlert(zone, langCode)
@@ -174,29 +230,100 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  // Step 4: Report type chosen — ask for location
+  // Step 4: Report type chosen — ask for state
   if (step === 3 && inputs[1] === '1') {
-    return new NextResponse(`CON Please enter your LGA or town name:`, {
+    return new NextResponse(`CON ${MENUS[lang].ask_state}`, {
       headers: { 'Content-Type': 'text/plain' },
     })
   }
 
-  // Step 5: Location entered — save report and confirm
+  // Step 5: State entered — show symptom/sign menu based on report type
   if (step === 4 && inputs[1] === '1') {
     const typeMap: Record<string, string> = {
       '1': 'HUMAN', '2': 'ANIMAL', '3': 'ENVIRONMENTAL'
     }
     const reportType = typeMap[inputs[2]] || 'HUMAN'
-    const location = inputs[3]
+    const menu = MENUS[lang]
+    const symptomMenu =
+      reportType === 'HUMAN' ? menu.symptoms_human :
+      reportType === 'ANIMAL' ? menu.symptoms_animal :
+      menu.symptoms_env
+
+    return new NextResponse(`CON ${symptomMenu}`, {
+      headers: { 'Content-Type': 'text/plain' },
+    })
+  }
+
+  // Step 6: Symptom chosen — ask for LGA/town
+  if (step === 5 && inputs[1] === '1') {
+    return new NextResponse(`CON ${MENUS[lang].ask_location}`, {
+      headers: { 'Content-Type': 'text/plain' },
+    })
+  }
+
+  // Step 7: Location entered — save report and confirm
+  if (step === 6 && inputs[1] === '1') {
+    const typeMap: Record<string, string> = {
+      '1': 'HUMAN', '2': 'ANIMAL', '3': 'ENVIRONMENTAL'
+    }
+    const reportType = typeMap[inputs[2]] || 'HUMAN'
+    const stateInput = inputs[3]?.trim() || 'Unspecified'
+    const symptomChoice = inputs[4]
+    const townInput = inputs[5]?.trim() || 'Unspecified'
     const ref = Math.random().toString(36).substring(2, 8).toUpperCase()
 
+    const symptomLabel = SYMPTOM_LABELS[reportType]?.[symptomChoice] ?? 'Unspecified'
+    const zone = STATE_TO_ZONE[stateInput.toLowerCase()] ?? LANG_TO_ZONE[lang] ?? 'North Central'
+
+    // Keep the raw audit log
     await supabase.from('ussd_reports').insert({
       phone_number: phoneNumber,
       report_type: reportType,
-      location_text: location,
+      location_text: `${stateInput}, ${townInput}`,
       language: lang,
-      synced: false,
+      synced: true,
     })
+
+    // Write directly to locations + outbreaks so it appears on the dashboard
+    try {
+      let locationId: string | null = null
+
+      const { data: existingLoc } = await supabase
+        .from('locations').select('id')
+        .ilike('name', townInput).limit(1).single()
+
+      if (existingLoc) {
+        locationId = existingLoc.id
+      } else {
+        const { data: newLoc } = await supabase
+          .from('locations')
+          .insert({
+            name: townInput,
+            state: stateInput,
+            lga: townInput,
+            ward: null,
+            geopolitical_zone: zone,
+            latitude: 9.082,
+            longitude: 8.675,
+          })
+          .select('id').single()
+        locationId = newLoc?.id ?? null
+      }
+
+      await supabase.from('outbreaks').insert({
+        disease_name: `Community-reported: ${symptomLabel}`,
+        sector: reportType,
+        severity: 'MODERATE',
+        status: 'ACTIVE',
+        report_source: 'COMMUNITY',
+        location_id: locationId,
+        start_date: new Date().toISOString().slice(0, 10),
+        description: `Reported via USSD by ${phoneNumber}. Sign/symptom: ${symptomLabel}. State entered: "${stateInput}", Town/LGA entered: "${townInput}". Language: ${lang}. Follow-up required to confirm details.`,
+        reported_by: phoneNumber,
+      })
+    } catch (err) {
+      console.error('USSD-to-outbreaks sync failed:', err)
+    }
 
     const menu = MENUS[lang]
     return new NextResponse(`END ${menu.confirm}${ref}`, {
