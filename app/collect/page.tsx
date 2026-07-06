@@ -55,11 +55,11 @@ const LANGUAGE_LABELS: Record<LangKey, string> = {
 const T: Record<LangKey, Record<string, string>> = {
   EN: {
     title: 'Field Data Collection',
-    subtitle: 'OneHealth Hub · Nigeria Zoonotic Surveillance',
+    subtitle: 'OneHealth Hub - Nigeria Zoonotic Surveillance',
     online: 'Online', offline: 'Offline',
     offlineNotice: 'You are offline. Reports will be saved to your device and synced automatically when you reconnect.',
     pendingSync: 'report(s) pending sync',
-    syncNow: 'Sync now →', syncing: 'Syncing...',
+    syncNow: 'Sync now', syncing: 'Syncing...',
     disease: 'Disease / Pathogen *', diseasePlaceholder: 'e.g. Lassa fever',
     sector: 'Sector *', severity: 'Severity *',
     sectorHuman: 'Human', sectorAnimal: 'Animal', sectorEnv: 'Environmental', sectorZoo: 'Zoonotic',
@@ -68,25 +68,25 @@ const T: Record<LangKey, Record<string, string>> = {
     state: 'State *', selectState: 'Select your state',
     lga: 'LGA', lgaPlaceholder: 'e.g. Lafia',
     ward: 'Ward', wardPlaceholder: 'e.g. Lafia Central Ward',
-    coordinates: 'Coordinates', locating: '(locating…)',
-    clearRelocate: 'Clear & re-locate',
+    coordinates: 'Coordinates', locating: '(locating)',
+    clearRelocate: 'Clear and re-locate',
     latPlaceholder: 'Latitude, e.g. 8.5560', lonPlaceholder: 'Longitude, e.g. 8.5227',
-    geoAutoFilled: 'Coordinates auto-filled — please confirm they look correct.',
+    geoAutoFilled: 'Coordinates auto-filled - please confirm they look correct.',
     geoNotFound: 'Could not find coordinates automatically. Please enter them manually if known.',
     dateReported: 'Date reported', reportedBy: 'Reported by', reportedByPlaceholder: 'Officer name',
     notes: 'Notes / Description', notesPlaceholder: 'Additional details about the outbreak...',
-    submit: 'Submit Report', saving: 'Saving...', saved: '✓ Report Saved!', saveOffline: 'Save Offline',
+    submit: 'Submit Report', saving: 'Saving...', saved: 'Report Saved!', saveOffline: 'Save Offline',
     backToDashboard: 'Back to dashboard',
     fillRequired: 'Please fill in Disease, State and Location.',
-    submitFailed: 'Could not save online — your report was saved locally and will sync when possible.',
+    submitFailed: 'Could not save online - your report was saved locally and will sync when possible.',
   },
   HA: {
     title: 'Tattara Bayanan Fili',
-    subtitle: 'OneHealth Hub · Sa ido kan Cututtukan Dabbobi a Najeriya',
+    subtitle: 'OneHealth Hub - Sa ido kan Cututtukan Dabbobi a Najeriya',
     online: 'Kan layi', offline: 'Ba kan layi ba',
-    offlineNotice: 'Ba ka kan layi ba. Za a adana rahoton a na\'urarka kuma a aika shi ta atomatik idan ka sake haduwa da yanar gizo.',
+    offlineNotice: 'Ba ka kan layi ba. Za a adana rahoton a naurarka kuma a aika shi ta atomatik idan ka sake haduwa da yanar gizo.',
     pendingSync: 'rahoto(ni) da ke jiran aikawa',
-    syncNow: 'Aika yanzu →', syncing: 'Ana aikawa...',
+    syncNow: 'Aika yanzu', syncing: 'Ana aikawa...',
     disease: 'Cuta / Kwayar cuta *', diseasePlaceholder: 'misali Zazzabin Lassa',
     sector: 'Bangare *', severity: 'Girman Matsala *',
     sectorHuman: 'Dan Adam', sectorAnimal: 'Dabba', sectorEnv: 'Muhalli', sectorZoo: 'Cutar Dabba zuwa Mutum',
@@ -95,79 +95,79 @@ const T: Record<LangKey, Record<string, string>> = {
     state: 'Jiha *', selectState: 'Zabi jihar ka',
     lga: 'Karamar Hukuma', lgaPlaceholder: 'misali Lafia',
     ward: 'Unguwa', wardPlaceholder: 'misali Unguwar Tsakiyar Lafia',
-    coordinates: 'Wurin Taswira', locating: '(ana nemowa…)',
-    clearRelocate: 'Share & sake nema',
+    coordinates: 'Wurin Taswira', locating: '(ana nemowa)',
+    clearRelocate: 'Share da sake nema',
     latPlaceholder: 'Latitude, misali 8.5560', lonPlaceholder: 'Longitude, misali 8.5227',
-    geoAutoFilled: 'An cika wurin taswira atomatik — da fatan za a tabbatar daidai ne.',
+    geoAutoFilled: 'An cika wurin taswira atomatik - da fatan za a tabbatar daidai ne.',
     geoNotFound: 'Ba a samu wurin taswira atomatik ba. Da fatan a shigar da shi da hannu idan an sani.',
-    dateReported: 'Ranar rahoto', reportedBy: 'Wanda ya bayar da rahoto', reportedByPlaceholder: 'Sunan jami\'i',
+    dateReported: 'Ranar rahoto', reportedBy: 'Wanda ya bayar da rahoto', reportedByPlaceholder: 'Sunan jamii',
     notes: 'Bayani / Karin bayani', notesPlaceholder: 'Karin bayani game da annobar...',
-    submit: 'Aika Rahoto', saving: 'Ana adanawa...', saved: '✓ An Adana Rahoton!', saveOffline: 'Adana Ba Kan Layi',
+    submit: 'Aika Rahoto', saving: 'Ana adanawa...', saved: 'An Adana Rahoton!', saveOffline: 'Adana Ba Kan Layi',
     backToDashboard: 'Koma zuwa dashboard',
     fillRequired: 'Da fatan a cika Cuta, Jiha da Wuri.',
-    submitFailed: 'Ba a iya adanawa kan layi ba — an adana rahoton a na\'ura kuma za a aika shi nan gaba.',
+    submitFailed: 'Ba a iya adanawa kan layi ba - an adana rahoton a naura kuma za a aika shi nan gaba.',
   },
   IG: {
     title: 'Nchikota Data Ubi',
-    subtitle: 'OneHealth Hub · Nleba Anya Oria Anụmanụ na Nigeria',
-    online: 'Ntanetị', offline: 'Adịghị n\'ịntanetị',
-    offlineNotice: 'Ị nọghị n\'ịntanetị. A ga-echekwa akụkọ gị na ngwaọrụ gị ma ziga ya na akpaghị aka mgbe ị nwetaghachiri ntanetị.',
-    pendingSync: 'akụkọ na-echere izipu',
-    syncNow: 'Ziga ugbu a →', syncing: 'Na-eziga...',
-    disease: 'Oria / Ihe na-ebute oria *', diseasePlaceholder: 'dịka Oria Lassa',
-    sector: 'Ngalaba *', severity: 'Ogo Ihe Ọjọọ *',
-    sectorHuman: 'Mmadụ', sectorAnimal: 'Anụmanụ', sectorEnv: 'Gburugburu', sectorZoo: 'Oria si n\'Anụmanụ gaa Mmadụ',
-    severityLow: 'Nta', severityModerate: 'Etiti', severityHigh: 'Ukwuu', severityCritical: 'Oke Ihe Ọjọọ',
-    locationName: 'Aha ebe *', locationPlaceholder: 'dịka Ụlọ Ọgwụ Lafia',
-    state: 'Steeti *', selectState: 'Họrọ steeti gị',
-    lga: 'LGA', lgaPlaceholder: 'dịka Lafia',
-    ward: 'Wadị', wardPlaceholder: 'dịka Wadị Etiti Lafia',
-    coordinates: 'Ebe Dị N\'ígódò', locating: '(na-achọ…)',
-    clearRelocate: 'Hichapụ & chọgharịa',
-    latPlaceholder: 'Latitude, dịka 8.5560', lonPlaceholder: 'Longitude, dịka 8.5227',
-    geoAutoFilled: 'Ejupụtala ebe n\'igodo n\'onwe ya — biko kwado na ọ ziri ezi.',
-    geoNotFound: 'Achọtaghị ebe n\'ígódò na akpaghị aka. Biko tinye ya n\'aka ma ọ bụrụ na ị maara ya.',
-    dateReported: 'Ụbọchị akụkọ', reportedBy: 'Onye kọrọ akụkọ', reportedByPlaceholder: 'Aha onye ọrụ',
-    notes: 'Ndetu / Nkọwa', notesPlaceholder: 'Nkọwa ọzọ gbasara ọrịa a...',
-    submit: 'Ziga Akụkọ', saving: 'Na-echekwa...', saved: '✓ Echekwala Akụkọ!', saveOffline: 'Chekwaa n\'Adịghị Ntanetị',
+    subtitle: 'OneHealth Hub - Nleba Anya Oria Anumanu na Nigeria',
+    online: 'Ntaneti', offline: 'Adighi n intaneti',
+    offlineNotice: 'I noghi n ntaneti. A ga-echekwa akuko gi na ngwaoru gi ma ziga ya na akpaghi aka mgbe i nwetaghachiri ntaneti.',
+    pendingSync: 'akuko na-echere izipu',
+    syncNow: 'Ziga ugbu a', syncing: 'Na-eziga...',
+    disease: 'Oria / Ihe na-ebute oria *', diseasePlaceholder: 'dika Oria Lassa',
+    sector: 'Ngalaba *', severity: 'Ogo Ihe Ojoo *',
+    sectorHuman: 'Mmadu', sectorAnimal: 'Anumanu', sectorEnv: 'Gburugburu', sectorZoo: 'Oria si n Anumanu gaa Mmadu',
+    severityLow: 'Nta', severityModerate: 'Etiti', severityHigh: 'Ukwuu', severityCritical: 'Oke Ihe Ojoo',
+    locationName: 'Aha ebe *', locationPlaceholder: 'dika Ulo Ogwu Lafia',
+    state: 'Steeti *', selectState: 'Horo steeti gi',
+    lga: 'LGA', lgaPlaceholder: 'dika Lafia',
+    ward: 'Wadi', wardPlaceholder: 'dika Wadi Etiti Lafia',
+    coordinates: 'Ebe Di N igodo', locating: '(na-acho)',
+    clearRelocate: 'Hichapu na chogharia',
+    latPlaceholder: 'Latitude, dika 8.5560', lonPlaceholder: 'Longitude, dika 8.5227',
+    geoAutoFilled: 'Ejupụtala ebe n igodo n onwe ya - biko kwado na o ziri ezi.',
+    geoNotFound: 'Achotaghi ebe n igodo na akpaghi aka. Biko tinye ya n aka ma o buru na i maara ya.',
+    dateReported: 'Ubochi akuko', reportedBy: 'Onye koro akuko', reportedByPlaceholder: 'Aha onye oru',
+    notes: 'Ndetu / Nkowa', notesPlaceholder: 'Nkowa ozo gbasara oria a...',
+    submit: 'Ziga Akuko', saving: 'Na-echekwa...', saved: 'Echekwala Akuko!', saveOffline: 'Chekwaa n Adighi Ntaneti',
     backToDashboard: 'Laghachi na dashboard',
     fillRequired: 'Biko dejupụta Oria, Steeti na Ebe.',
-    submitFailed: 'Enweghị ike ichekwa na ntanetị — echekwala akụkọ gị n\'ngwaọrụ gị, a ga-ezigakwa ya mgbe e nwere ohere.',
+    submitFailed: 'Enweghi ike ichekwa na ntaneti - echekwala akuko gi n ngwaoru gi, a ga-ezigakwa ya mgbe e nwere ohere.',
   },
   YO: {
-    title: 'Ikojọpọ Data Ojula',
-    subtitle: 'OneHealth Hub · Ibojuwo Arun Eranko ni Naijiria',
+    title: 'Ikojopo Data Ojula',
+    subtitle: 'OneHealth Hub - Ibojuwo Arun Eranko ni Naijiria',
     online: 'Lori ayelujara', offline: 'Ko si lori ayelujara',
-    offlineNotice: 'O ko si lori ayelujara. A o fi ijabo pamọ si ẹrọ rẹ ki a si fi ranṣẹ laifọwọyi nigba ti o ba tun sopọ mọ ayelujara.',
-    pendingSync: 'ijabo(awọn) ti n duro de fifiranṣẹ',
-    syncNow: 'Fi ranṣẹ nisisiyi →', syncing: 'N fi ranṣẹ...',
+    offlineNotice: 'O ko si lori ayelujara. A o fi ijabo pamo si ero re ki a si fi ranse laifowoyi nigba ti o ba tun sopo mo ayelujara.',
+    pendingSync: 'ijabo(awon) ti n duro de fifiranse',
+    syncNow: 'Fi ranse nisisiyi', syncing: 'N fi ranse...',
     disease: 'Arun / Kokoro Arun *', diseasePlaceholder: 'bii Iba Lassa',
-    sector: 'Eka *', severity: 'Bi O Ṣe Le To *',
+    sector: 'Eka *', severity: 'Bi O Se Le To *',
     sectorHuman: 'Eniyan', sectorAnimal: 'Eranko', sectorEnv: 'Ayika', sectorZoo: 'Arun Eranko si Eniyan',
-    severityLow: 'Kekere', severityModerate: 'Alabọde', severityHigh: 'Giga', severityCritical: 'Idẹruba',
-    locationName: 'Orukọ ibi *', locationPlaceholder: 'bii Ile-iwosan Gbogbogbo Lafia',
-    state: 'Ipinlẹ *', selectState: 'Yan ipinlẹ rẹ',
+    severityLow: 'Kekere', severityModerate: 'Alabode', severityHigh: 'Giga', severityCritical: 'Ideruba',
+    locationName: 'Oruko ibi *', locationPlaceholder: 'bii Ile-iwosan Gbogbogbo Lafia',
+    state: 'Ipinle *', selectState: 'Yan ipinle re',
     lga: 'LGA', lgaPlaceholder: 'bii Lafia',
     ward: 'Agbegbe (Ward)', wardPlaceholder: 'bii Agbegbe Aarin Lafia',
-    coordinates: 'Ipo Aworan', locating: '(n wa…)',
-    clearRelocate: 'Nu & tun wa',
+    coordinates: 'Ipo Aworan', locating: '(n wa)',
+    clearRelocate: 'Nu ki o si tun wa',
     latPlaceholder: 'Latitude, bii 8.5560', lonPlaceholder: 'Longitude, bii 8.5227',
-    geoAutoFilled: 'A ti fi ipo aworan kun laifọwọyi — jọwọ ṣayẹwo pe o tọ.',
-    geoNotFound: 'A ko le ri ipo aworan laifọwọyi. Jọwọ tẹ ẹ sii pẹlu ọwọ ti o ba mọ.',
-    dateReported: 'Ọjọ ijabo', reportedBy: 'Ẹni to jabo', reportedByPlaceholder: 'Orukọ oṣiṣẹ',
+    geoAutoFilled: 'A ti fi ipo aworan kun laifowoyi - jowo sayewo pe o to.',
+    geoNotFound: 'A ko le ri ipo aworan laifowoyi. Jowo te e sii pelu owo ti o ba mo.',
+    dateReported: 'Ojo ijabo', reportedBy: 'Eni to jabo', reportedByPlaceholder: 'Oruko osise',
     notes: 'Akiyesi / Alaye', notesPlaceholder: 'Alaye afikun nipa ajakale-arun naa...',
-    submit: 'Fi Ijabo Ranṣẹ', saving: 'N fi pamọ...', saved: '✓ Ijabo Ti Fi Pamọ!', saveOffline: 'Fi Pamọ Lai si Ayelujara',
+    submit: 'Fi Ijabo Ranse', saving: 'N fi pamo...', saved: 'Ijabo Ti Fi Pamo!', saveOffline: 'Fi Pamo Lai si Ayelujara',
     backToDashboard: 'Pada si dashboard',
-    fillRequired: 'Jọwọ kun Arun, Ipinlẹ ati Ibi.',
-    submitFailed: 'A ko le fi pamọ lori ayelujara — a ti fi ijabo rẹ pamọ si ẹrọ, a o si fi ranṣẹ nigba ti o ba ṣeeṣe.',
+    fillRequired: 'Jowo kun Arun, Ipinle ati Ibi.',
+    submitFailed: 'A ko le fi pamo lori ayelujara - a ti fi ijabo re pamo si ero, a o si fi ranse nigba ti o ba seese.',
   },
   PCM: {
     title: 'Field Data Collection',
-    subtitle: 'OneHealth Hub · Nigeria Zoonotic Surveillance',
+    subtitle: 'OneHealth Hub - Nigeria Zoonotic Surveillance',
     online: 'Online', offline: 'Offline',
     offlineNotice: 'You no dey online. We go save your report for your device and send am automatic once you get network again.',
     pendingSync: 'report(s) wey dey wait to send',
-    syncNow: 'Send am now →', syncing: 'E dey send...',
+    syncNow: 'Send am now', syncing: 'E dey send...',
     disease: 'Disease / Wetin dey cause am *', diseasePlaceholder: 'e.g. Lassa fever',
     sector: 'Sector *', severity: 'How E Bad Reach *',
     sectorHuman: 'Human', sectorAnimal: 'Animal', sectorEnv: 'Environment', sectorZoo: 'Animal-to-Human Sickness',
@@ -176,17 +176,17 @@ const T: Record<LangKey, Record<string, string>> = {
     state: 'State *', selectState: 'Pick your state',
     lga: 'LGA', lgaPlaceholder: 'e.g. Lafia',
     ward: 'Ward', wardPlaceholder: 'e.g. Lafia Central Ward',
-    coordinates: 'Location Point', locating: '(e dey find am…)',
-    clearRelocate: 'Clear am & find again',
+    coordinates: 'Location Point', locating: '(e dey find am)',
+    clearRelocate: 'Clear am and find again',
     latPlaceholder: 'Latitude, e.g. 8.5560', lonPlaceholder: 'Longitude, e.g. 8.5227',
-    geoAutoFilled: 'We don fill the location point — abeg check say e correct.',
+    geoAutoFilled: 'We don fill the location point - abeg check say e correct.',
     geoNotFound: 'We no fit find the location point automatic. Abeg enter am yourself if you know am.',
     dateReported: 'Date wey you report am', reportedBy: 'Person wey report am', reportedByPlaceholder: 'Officer name',
     notes: 'Notes / Wetin Happen', notesPlaceholder: 'Any other gist about the outbreak...',
-    submit: 'Send Report', saving: 'E dey save...', saved: '✓ Report Don Save!', saveOffline: 'Save Am Offline',
+    submit: 'Send Report', saving: 'E dey save...', saved: 'Report Don Save!', saveOffline: 'Save Am Offline',
     backToDashboard: 'Go back to dashboard',
     fillRequired: 'Abeg fill Disease, State and Location.',
-    submitFailed: 'We no fit save am online — we don save your report for your device, e go send once network dey.',
+    submitFailed: 'We no fit save am online - we don save your report for your device, e go send once network dey.',
   },
 }
 
@@ -412,4 +412,225 @@ export default function CollectPage() {
             </div>
             <p className="text-xs text-gray-500">{t.subtitle}</p>
           </div>
-          <div className="flex
+          <div className="flex items-center gap-2">
+            <span className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${
+              isOnline
+                ? 'bg-teal-50 text-teal-700 border border-teal-200'
+                : 'bg-amber-50 text-amber-700 border border-amber-200'
+            }`}>
+              {isOnline ? <Wifi size={11} /> : <WifiOff size={11} />}
+              {isOnline ? t.online : t.offline}
+            </span>
+          </div>
+        </div>
+
+        {!isOnline && (
+          <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 mb-4">
+            <WifiOff size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              {t.offlineNotice}
+            </p>
+          </div>
+        )}
+
+        {queueLen > 0 && isOnline && (
+          <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 mb-4">
+            <p className="text-xs text-blue-700 dark:text-blue-400">
+              {queueLen} {t.pendingSync}
+            </p>
+            <button
+              onClick={syncQueue}
+              disabled={syncing}
+              className="text-xs font-medium text-blue-600 hover:text-blue-500 disabled:opacity-50"
+            >
+              {syncing ? t.syncing : t.syncNow}
+            </button>
+          </div>
+        )}
+
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 space-y-4">
+
+          <div>
+            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">
+              {t.disease}
+            </label>
+            <input
+              value={form.disease_name}
+              onChange={e => update('disease_name', e.target.value)}
+              placeholder={t.diseasePlaceholder}
+              className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">{t.sector}</label>
+              <select
+                value={form.sector}
+                onChange={e => update('sector', e.target.value)}
+                className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              >
+                <option value="HUMAN">{t.sectorHuman}</option>
+                <option value="ANIMAL">{t.sectorAnimal}</option>
+                <option value="ENVIRONMENTAL">{t.sectorEnv}</option>
+                <option value="ZOONOTIC">{t.sectorZoo}</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">{t.severity}</label>
+              <select
+                value={form.severity}
+                onChange={e => update('severity', e.target.value)}
+                className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              >
+                <option value="LOW">{t.severityLow}</option>
+                <option value="MODERATE">{t.severityModerate}</option>
+                <option value="HIGH">{t.severityHigh}</option>
+                <option value="CRITICAL">{t.severityCritical}</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">{t.locationName}</label>
+            <input
+              value={form.location_name}
+              onChange={e => update('location_name', e.target.value)}
+              onBlur={handleLocationBlur}
+              placeholder={t.locationPlaceholder}
+              className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">{t.state}</label>
+              <select
+                value={form.state}
+                onChange={e => update('state', e.target.value)}
+                onBlur={handleLocationBlur}
+                className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              >
+                <option value="">{t.selectState}</option>
+                {NIGERIA_STATES.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">{t.lga}</label>
+              <input
+                value={form.lga}
+                onChange={e => update('lga', e.target.value)}
+                onBlur={handleLocationBlur}
+                placeholder={t.lgaPlaceholder}
+                className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">{t.ward}</label>
+            <input
+              value={form.ward}
+              onChange={e => update('ward', e.target.value)}
+              onBlur={handleLocationBlur}
+              placeholder={t.wardPlaceholder}
+              className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                {t.coordinates} {geocoding && t.locating}
+              </span>
+              {(form.latitude || form.longitude) && (
+                <button
+                  type="button"
+                  onClick={() => { update('latitude', ''); update('longitude', ''); setGeoNotice(null); }}
+                  className="text-[11px] text-teal-600 hover:underline"
+                >
+                  {t.clearRelocate}
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <input
+                  value={form.latitude}
+                  onChange={e => update('latitude', e.target.value)}
+                  placeholder={t.latPlaceholder}
+                  className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              <div>
+                <input
+                  value={form.longitude}
+                  onChange={e => update('longitude', e.target.value)}
+                  placeholder={t.lonPlaceholder}
+                  className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+            </div>
+            {geoNotice && (
+              <p className="flex items-center gap-1 text-[11px] text-gray-500 mt-1.5">
+                <MapPin size={11} className="shrink-0" />
+                {geoNotice}
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">{t.dateReported}</label>
+              <input
+                type="date"
+                value={form.start_date}
+                onChange={e => update('start_date', e.target.value)}
+                className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">{t.reportedBy}</label>
+              <input
+                value={form.reported_by}
+                onChange={e => update('reported_by', e.target.value)}
+                placeholder={t.reportedByPlaceholder}
+                className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">{t.notes}</label>
+            <textarea
+              value={form.description}
+              onChange={e => update('description', e.target.value)}
+              placeholder={t.notesPlaceholder}
+              rows={3}
+              className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+            />
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={saving || saved}
+            className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-colors ${
+              saved
+                ? 'bg-teal-600 text-white'
+                : 'bg-teal-600 hover:bg-teal-700 text-white disabled:opacity-60'
+            }`}
+          >
+            <Send size={14} />
+            {saving ? t.saving : saved ? t.saved : isOnline ? t.submit : t.saveOffline}
+          </button>
+        </div>
+
+        <p className="text-center text-xs text-gray-400 mt-4">
+          OneHealth Hub - <a href="/dashboard" className="text-teal-600 hover:underline">{t.backToDashboard}</a>
+        </p>
+      </div>
+    </main>
+  );
+}
