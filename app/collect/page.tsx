@@ -393,10 +393,10 @@ export default function CollectPage() {
             <select
               value={lang}
               onChange={e => setLang(e.target.value as LangKey)}
-              className="text-xs font-medium text-gray-600 dark:text-gray-300 bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 focus:outline-none"
+              className="text-xs font-bold text-gray-700 dark:text-gray-200 bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 focus:outline-none"
             >
               {(Object.keys(LANGUAGE_LABELS) as LangKey[]).map(code => (
-                <option key={code} value={code}>{LANGUAGE_LABELS[code]}</option>
+                <option key={code} value={code} style={{ fontWeight: 700 }}>{LANGUAGE_LABELS[code]}</option>
               ))}
             </select>
           </div>
