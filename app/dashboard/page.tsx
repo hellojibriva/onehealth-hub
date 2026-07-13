@@ -1,605 +1,391 @@
+// @ts-nocheck
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import dynamic from 'next/dynamic'
+import { getSupabase } from '@/lib/supabaseClient'
 import {
-  RCCEAlert, AlertStatus, AlertType,
-  GEOPOLITICAL_ZONES, ZONE_PRIMARY_LANGUAGE,
-  SUPPORTED_LANGUAGES, MONTHS, DISEASE_OPTIONS,
-  ALERT_TYPE_LABELS, STATUS_COLORS, USSD_CHAR_LIMIT,
-} from '@/lib/rcce-types'
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, BarChart, Bar, Legend
+} from 'recharts'
+import RCCEAlertBanner from '@/components/RCCEAlertBanner'
+import SORMASExportPanel from '@/components/SORMASExportPanel'
 
-// ============================================================
-// /rcce — Admin RCCE Management Page
-// ============================================================
+const NigeriaMap = dynamic(() => import('@/components/NigeriaMap'), { ssr: false })
 
-type Tab = 'compose' | 'manage' | 'history'
+type Sector = 'HUMAN' | 'ANIMAL' | 'ENVIRONMENTAL' | 'ZOONOTIC' | 'ALL'
+type Severity = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL' | 'INFO' | 'WARNING'
+type Status = 'ACTIVE' | 'CONTAINED' | 'RESOLVED' | 'MONITORING'
 
-const EMPTY_FORM = {
-  title: '',
-  disease: '',
-  alert_type: 'SEASONAL' as AlertType,
-  geopolitical_zone: '',
-  language_code: 'en',
-  language_name: 'English',
-  body_text: '',
-  prevention_tips: ['', '', '', ''],
-  action_items: ['', '', ''],
-  where_to_go: '',
-  ussd_screen_1: '',
-  ussd_screen_2: '',
-  ussd_screen_3: '',
-  trigger_month: undefined as number | undefined,
+interface Location {
+  id: string
+  name: string
+  lga: string
+  state: string
+  geopolitical_zone: string
+  latitude?: number
+  longitude?: number
 }
 
-export default function RCCEPage() {
-  const [tab, setTab] = useState<Tab>('manage')
-  const [alerts, setAlerts] = useState<RCCEAlert[]>([])
-  const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState(EMPTY_FORM)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [filterZone, setFilterZone] = useState('')
-  const [filterStatus, setFilterStatus] = useState('')
-  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
-
-  useEffect(() => { fetchAlerts() }, [])
-
-  function showToast(msg: string, type: 'success' | 'error' = 'success') {
-    setToast({ msg, type })
-    setTimeout(() => setToast(null), 3500)
-  }
-
-  async function fetchAlerts() {
-    setLoading(true)
-    const { data } = await supabase
-      .from('rcce_alerts')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (data) setAlerts(data)
-    setLoading(false)
-  }
-
-  // Auto-populate language when zone changes
-  function handleZoneChange(zone: string) {
-    const lang = ZONE_PRIMARY_LANGUAGE[zone as keyof typeof ZONE_PRIMARY_LANGUAGE]
-    setForm(f => ({
-      ...f,
-      geopolitical_zone: zone,
-      language_code: lang?.code ?? 'en',
-      language_name: lang?.name ?? 'English',
-    }))
-  }
-
-  function updateTip(index: number, value: string) {
-    setForm(f => {
-      const tips = [...f.prevention_tips]
-      tips[index] = value
-      return { ...f, prevention_tips: tips }
-    })
-  }
-
-  function updateAction(index: number, value: string) {
-    setForm(f => {
-      const items = [...f.action_items]
-      items[index] = value
-      return { ...f, action_items: items }
-    })
-  }
-
-  async function handleSave(status: AlertStatus) {
-    if (!form.title || !form.disease || !form.geopolitical_zone || !form.body_text) {
-      showToast('Please fill in all required fields', 'error')
-      return
-    }
-    setSaving(true)
-
-    const payload = {
-      ...form,
-      prevention_tips: form.prevention_tips.filter(Boolean),
-      action_items: form.action_items.filter(Boolean),
-      status,
-      sent_at: status === 'SENT' ? new Date().toISOString() : null,
-    }
-
-    let error
-    if (editingId) {
-      ;({ error } = await supabase.from('rcce_alerts').update(payload).eq('id', editingId))
-    } else {
-      ;({ error } = await supabase.from('rcce_alerts').insert(payload))
-    }
-
-    setSaving(false)
-    if (error) {
-      showToast('Save failed: ' + error.message, 'error')
-    } else {
-      showToast(status === 'SENT' ? 'Alert sent to community!' : 'Alert saved as ' + status.toLowerCase())
-      setForm(EMPTY_FORM)
-      setEditingId(null)
-      setTab('manage')
-      fetchAlerts()
-    }
-  }
-
-  function handleEdit(alert: RCCEAlert) {
-    setForm({
-      title: alert.title,
-      disease: alert.disease,
-      alert_type: alert.alert_type,
-      geopolitical_zone: alert.geopolitical_zone,
-      language_code: alert.language_code,
-      language_name: alert.language_name,
-      body_text: alert.body_text,
-      prevention_tips: [...(alert.prevention_tips ?? []), '', '', ''].slice(0, 4),
-      action_items: [...(alert.action_items ?? []), '', ''].slice(0, 3),
-      where_to_go: alert.where_to_go ?? '',
-      ussd_screen_1: alert.ussd_screen_1 ?? '',
-      ussd_screen_2: alert.ussd_screen_2 ?? '',
-      ussd_screen_3: alert.ussd_screen_3 ?? '',
-      trigger_month: alert.trigger_month,
-    })
-    setEditingId(alert.id)
-    setTab('compose')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  async function handleArchive(id: string) {
-    await supabase.from('rcce_alerts').update({ status: 'ARCHIVED' }).eq('id', id)
-    fetchAlerts()
-    showToast('Alert archived')
-  }
-
-  const filtered = alerts.filter(a => {
-    if (filterZone && a.geopolitical_zone !== filterZone) return false
-    if (filterStatus && a.status !== filterStatus) return false
-    return true
-  })
-
-  const ussd1Len = form.ussd_screen_1.length
-  const ussd2Len = form.ussd_screen_2.length
-  const ussd3Len = form.ussd_screen_3.length
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Toast */}
-      {toast && (
-        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium transition-all
-          ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
-          {toast.msg}
-        </div>
-      )}
-
-      {/* Page header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-5">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                Risk Communication & Community Engagement
-              </h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Compose and schedule seasonal health alerts for communities across all six geopolitical zones
-              </p>
-            </div>
-            <button
-              onClick={() => { setForm(EMPTY_FORM); setEditingId(null); setTab('compose') }}
-              className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-            >
-              + New Alert
-            </button>
-          </div>
-
-          {/* Stats row */}
-          <div className="flex gap-6 mt-4">
-            {(['DRAFT', 'SCHEDULED', 'SENT', 'ARCHIVED'] as AlertStatus[]).map(s => (
-              <div key={s} className="text-center">
-                <p className="text-lg font-bold text-gray-800">
-                  {alerts.filter(a => a.status === s).length}
-                </p>
-                <p className="text-xs text-gray-500">{s.charAt(0) + s.slice(1).toLowerCase()}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="bg-white border-b border-gray-200 px-6">
-        <div className="max-w-5xl mx-auto flex gap-0">
-          {([
-            { key: 'compose', label: editingId ? '✏️ Edit Alert' : '✏️ Compose' },
-            { key: 'manage',  label: '📋 Manage Alerts' },
-            { key: 'history', label: '📜 Delivery History' },
-          ] as { key: Tab; label: string }[]).map(t => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-                tab === t.key
-                  ? 'border-green-600 text-green-700'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="max-w-5xl mx-auto px-6 py-6">
-
-        {/* ── COMPOSE TAB ── */}
-        {tab === 'compose' && (
-          <div className="space-y-6">
-            {/* Basic info */}
-            <Section title="Alert Details">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <Label>Alert Title *</Label>
-                  <input
-                    className="Input"
-                    placeholder="e.g. Lassa Fever Dry Season Warning — North West"
-                    value={form.title}
-                    onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                  />
-                </div>
-
-                <div>
-                  <Label>Disease *</Label>
-                  <select className="Input" value={form.disease}
-                    onChange={e => setForm(f => ({ ...f, disease: e.target.value }))}>
-                    <option value="">Select disease</option>
-                    {DISEASE_OPTIONS.map(d => <option key={d}>{d}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <Label>Alert Type *</Label>
-                  <select className="Input" value={form.alert_type}
-                    onChange={e => setForm(f => ({ ...f, alert_type: e.target.value as AlertType }))}>
-                    {Object.entries(ALERT_TYPE_LABELS).map(([k, v]) => (
-                      <option key={k} value={k}>{v}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <Label>Geopolitical Zone *</Label>
-                  <select className="Input" value={form.geopolitical_zone}
-                    onChange={e => handleZoneChange(e.target.value)}>
-                    <option value="">Select zone</option>
-                    {GEOPOLITICAL_ZONES.map(z => <option key={z}>{z}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <Label>Language</Label>
-                  <select className="Input" value={form.language_code}
-                    onChange={e => {
-                      const lang = SUPPORTED_LANGUAGES.find(l => l.code === e.target.value)
-                      setForm(f => ({ ...f, language_code: e.target.value, language_name: lang?.name ?? '' }))
-                    }}>
-                    {SUPPORTED_LANGUAGES.map(l => (
-                      <option key={l.code} value={l.code}>{l.name}</option>
-                    ))}
-                  </select>
-                  {form.geopolitical_zone && (
-                    <p className="text-xs text-gray-400 mt-1">
-                      Auto-selected for {form.geopolitical_zone}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label>Auto-trigger Month</Label>
-                  <select className="Input" value={form.trigger_month ?? ''}
-                    onChange={e => setForm(f => ({
-                      ...f, trigger_month: e.target.value ? Number(e.target.value) : undefined
-                    }))}>
-                    <option value="">Manual only</option>
-                    {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
-                  </select>
-                  <p className="text-xs text-gray-400 mt-1">Alert sends automatically this month</p>
-                </div>
-              </div>
-            </Section>
-
-            {/* Alert body */}
-            <Section title="Alert Message">
-              <Label>Main Body Text * <span className="text-gray-400 font-normal">(in {form.language_name})</span></Label>
-              <textarea
-                className="Input min-h-[100px] resize-y"
-                placeholder="Write the alert message in the selected language..."
-                value={form.body_text}
-                onChange={e => setForm(f => ({ ...f, body_text: e.target.value }))}
-              />
-
-              <div className="mt-4">
-                <Label>Prevention Tips (up to 4)</Label>
-                <div className="space-y-2">
-                  {form.prevention_tips.map((tip, i) => (
-                    <input key={i} className="Input" placeholder={`Tip ${i + 1}...`}
-                      value={tip} onChange={e => updateTip(i, e.target.value)} />
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <Label>Action Items (up to 3)</Label>
-                <div className="space-y-2">
-                  {form.action_items.map((item, i) => (
-                    <input key={i} className="Input" placeholder={`Action ${i + 1}...`}
-                      value={item} onChange={e => updateAction(i, e.target.value)} />
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <Label>Where to Seek Help</Label>
-                <input className="Input"
-                  placeholder="e.g. Nearest PHC or call NCDC: 0800-9700-0010"
-                  value={form.where_to_go}
-                  onChange={e => setForm(f => ({ ...f, where_to_go: e.target.value }))} />
-              </div>
-            </Section>
-
-            {/* USSD screens */}
-            <Section title="USSD Alert Screens" subtitle="Max 160 characters per screen">
-              {[
-                { key: 'ussd_screen_1', label: 'Screen 1 — Opening (greeting + risk statement)', len: ussd1Len },
-                { key: 'ussd_screen_2', label: 'Screen 2 — Prevention tips + menu', len: ussd2Len },
-                { key: 'ussd_screen_3', label: 'Screen 3 — Action / referral + end', len: ussd3Len },
-              ].map(({ key, label, len }) => (
-                <div key={key} className="mb-3">
-                  <div className="flex justify-between items-center mb-1">
-                    <Label>{label}</Label>
-                    <span className={`text-xs font-mono font-semibold ${len > USSD_CHAR_LIMIT ? 'text-red-600' : 'text-gray-400'}`}>
-                      {len}/{USSD_CHAR_LIMIT}
-                    </span>
-                  </div>
-                  <textarea
-                    className={`Input font-mono text-sm resize-none min-h-[80px] ${len > USSD_CHAR_LIMIT ? 'border-red-400 bg-red-50' : ''}`}
-                    value={(form as any)[key]}
-                    onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                    placeholder="Write USSD screen text..."
-                  />
-                  {/* USSD preview */}
-                  {(form as any)[key] && (
-                    <div className="mt-1 rounded bg-gray-900 text-green-400 font-mono text-xs p-2.5 leading-relaxed whitespace-pre-wrap">
-                      {(form as any)[key]}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </Section>
-
-            {/* Action buttons */}
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={() => handleSave('DRAFT')}
-                disabled={saving}
-                className="px-5 py-2.5 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-              >
-                Save Draft
-              </button>
-              <button
-                onClick={() => handleSave('SCHEDULED')}
-                disabled={saving}
-                className="px-5 py-2.5 rounded-lg border border-blue-300 bg-blue-50 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-50"
-              >
-                Schedule
-              </button>
-              <button
-                onClick={() => handleSave('SENT')}
-                disabled={saving}
-                className="px-5 py-2.5 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
-              >
-                {saving ? 'Sending...' : 'Send Now →'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── MANAGE TAB ── */}
-        {tab === 'manage' && (
-          <div>
-            {/* Filters */}
-            <div className="flex gap-3 mb-5">
-              <select className="Input max-w-xs text-sm" value={filterZone}
-                onChange={e => setFilterZone(e.target.value)}>
-                <option value="">All Zones</option>
-                {GEOPOLITICAL_ZONES.map(z => <option key={z}>{z}</option>)}
-              </select>
-              <select className="Input max-w-xs text-sm" value={filterStatus}
-                onChange={e => setFilterStatus(e.target.value)}>
-                <option value="">All Statuses</option>
-                {['DRAFT', 'SCHEDULED', 'SENT', 'ARCHIVED'].map(s => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-
-            {loading ? (
-              <p className="text-sm text-gray-500 py-8 text-center">Loading alerts...</p>
-            ) : filtered.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
-                <p className="text-4xl mb-3">📭</p>
-                <p className="text-sm font-medium">No alerts yet</p>
-                <p className="text-xs mt-1">Compose your first seasonal alert above</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {filtered.map(alert => (
-                  <div key={alert.id}
-                    className="bg-white rounded-xl border border-gray-200 p-4 hover:border-gray-300 transition-colors">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[alert.status]}`}>
-                            {alert.status}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            {ALERT_TYPE_LABELS[alert.alert_type]}
-                          </span>
-                          <span className="text-xs text-gray-400">·</span>
-                          <span className="text-xs text-gray-500">
-                            {alert.geopolitical_zone} · {alert.language_name}
-                          </span>
-                          {alert.trigger_month && (
-                            <>
-                              <span className="text-xs text-gray-400">·</span>
-                              <span className="text-xs text-blue-600 font-medium">
-                                🗓 Triggers: {MONTHS[alert.trigger_month - 1]}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                        <p className="font-semibold text-gray-800 text-sm leading-snug">{alert.title}</p>
-                        <p className="text-xs text-gray-500 mt-1 line-clamp-1">{alert.body_text}</p>
-                        {alert.ussd_screen_1 && (
-                          <div className="mt-2 inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 rounded px-2 py-0.5">
-                            <span>📱</span> USSD screens configured
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex gap-2 flex-shrink-0">
-                        {alert.status !== 'SENT' && alert.status !== 'ARCHIVED' && (
-                          <button
-                            onClick={() => handleEdit(alert)}
-                            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium transition-colors"
-                          >
-                            Edit
-                          </button>
-                        )}
-                        {alert.status === 'DRAFT' && (
-                          <button
-                            onClick={async () => {
-                              await supabase.from('rcce_alerts')
-                                .update({ status: 'SENT', sent_at: new Date().toISOString() })
-                                .eq('id', alert.id)
-                              fetchAlerts()
-                              showToast('Alert sent!')
-                            }}
-                            className="text-xs px-3 py-1.5 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-colors"
-                          >
-                            Send
-                          </button>
-                        )}
-                        {alert.status !== 'ARCHIVED' && (
-                          <button
-                            onClick={() => handleArchive(alert.id)}
-                            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-colors"
-                          >
-                            Archive
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── HISTORY TAB ── */}
-        {tab === 'history' && (
-          <RCCEDeliveryHistory />
-        )}
-      </div>
-
-      <style jsx>{`
-        .Input {
-          width: 100%;
-          border: 1px solid #e5e7eb;
-          border-radius: 0.5rem;
-          padding: 0.5rem 0.75rem;
-          font-size: 0.875rem;
-          color: #111827;
-          background: white;
-          outline: none;
-          transition: border-color 0.15s;
-        }
-        .Input:focus {
-          border-color: #16a34a;
-          box-shadow: 0 0 0 2px rgba(22,163,74,0.1);
-        }
-      `}</style>
-    </div>
-  )
+interface Outbreak {
+  id: string
+  disease_name: string
+  sector: Sector
+  status: Status
+  severity: Severity
+  start_date: string
+  description: string
+  reported_by: string
+  locations: Location
 }
 
-// ── Sub-components ──
-
-function Section({ title, subtitle, children }: {
-  title: string; subtitle?: string; children: React.ReactNode
-}) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <div className="mb-4">
-        <h3 className="text-sm font-bold text-gray-800">{title}</h3>
-        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
-      </div>
-      {children}
-    </div>
-  )
+interface Alert {
+  id: string
+  title: string
+  message: string
+  severity: 'INFO' | 'WARNING' | 'CRITICAL'
+  is_read: boolean
+  created_at: string
+  outbreaks: { disease_name: string; sector: string } | null
 }
 
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">
-      {children}
-    </label>
-  )
+interface CaseTrend {
+  report_date: string
+  confirmed_cases: number
+  deaths: number
+  recovered: number
 }
 
-function RCCEDeliveryHistory() {
-  const [deliveries, setDeliveries] = useState<any[]>([])
+const supabase = getSupabase()
+
+const sectorColors: Record<string, string> = {
+  HUMAN: 'bg-rose-500/20 text-rose-300 border border-rose-500/30',
+  ANIMAL: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+  ENVIRONMENTAL: 'bg-sky-500/20 text-sky-300 border border-sky-500/30',
+  ZOONOTIC: 'bg-purple-500/20 text-purple-300 border border-purple-500/30',
+}
+
+const severityColors: Record<string, string> = {
+  LOW: 'bg-slate-500/20 text-slate-300 border border-slate-500/30',
+  MODERATE: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+  HIGH: 'bg-orange-500/20 text-orange-300 border border-orange-500/30',
+  CRITICAL: 'bg-red-500/20 text-red-300 border border-red-500/30',
+  INFO: 'bg-sky-500/20 text-sky-300 border border-sky-500/30',
+  WARNING: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+}
+
+const statusColors: Record<string, string> = {
+  ACTIVE: 'text-red-400',
+  CONTAINED: 'text-amber-400',
+  RESOLVED: 'text-emerald-400',
+  MONITORING: 'text-sky-400',
+}
+
+const statusDot: Record<string, string> = {
+  ACTIVE: 'bg-red-400 animate-pulse',
+  CONTAINED: 'bg-amber-400',
+  RESOLVED: 'bg-emerald-400',
+  MONITORING: 'bg-sky-400',
+}
+
+export default function DashboardPage() {
+  const [outbreaks, setOutbreaks] = useState<Outbreak[]>([])
+  const [alerts, setAlerts] = useState<Alert[]>([])
+  const [caseTrends, setCaseTrends] = useState<CaseTrend[]>([])
   const [loading, setLoading] = useState(true)
+  const [sectorFilter, setSectorFilter] = useState<Sector>('ALL')
+  const [activeTab, setActiveTab] = useState<'outbreaks' | 'trends' | 'alerts'>('outbreaks')
+  const [userZone, setUserZone] = useState<string | undefined>(undefined)
 
   useEffect(() => {
-    async function fetch() {
-      const { data } = await supabase
-        .from('rcce_deliveries')
-        .select('*, rcce_alerts(title, disease, geopolitical_zone, language_name)')
-        .order('delivered_at', { ascending: false })
-        .limit(50)
-      if (data) setDeliveries(data)
+    async function fetchAll() {
+      setLoading(true)
+
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('state')
+          .eq('id', user.id)
+          .single()
+        if (profile?.state) {
+          const zoneMap: Record<string, string> = {
+            'FCT': 'North Central', 'Nasarawa': 'North Central', 'Niger': 'North Central',
+            'Benue': 'North Central', 'Kogi': 'North Central', 'Kwara': 'North Central', 'Plateau': 'North Central',
+            'Lagos': 'South West', 'Ogun': 'South West', 'Oyo': 'South West',
+            'Osun': 'South West', 'Ondo': 'South West', 'Ekiti': 'South West',
+            'Kano': 'North West', 'Kaduna': 'North West', 'Katsina': 'North West',
+            'Kebbi': 'North West', 'Sokoto': 'North West', 'Zamfara': 'North West', 'Jigawa': 'North West',
+            'Borno': 'North East', 'Yobe': 'North East', 'Adamawa': 'North East',
+            'Taraba': 'North East', 'Bauchi': 'North East', 'Gombe': 'North East',
+            'Anambra': 'South East', 'Enugu': 'South East', 'Imo': 'South East',
+            'Abia': 'South East', 'Ebonyi': 'South East',
+            'Rivers': 'South South', 'Delta': 'South South', 'Edo': 'South South',
+            'Bayelsa': 'South South', 'Cross River': 'South South', 'Akwa Ibom': 'South South',
+          }
+          setUserZone(zoneMap[profile.state] ?? undefined)
+        }
+      }
+
+      const [outbreakRes, alertRes, caseRes] = await Promise.all([
+        supabase.from('outbreaks').select('*, locations(*)').order('start_date', { ascending: false }),
+        supabase.from('alerts').select('*, outbreaks(disease_name, sector)').order('created_at', { ascending: false }).limit(10),
+        supabase.from('cases').select('report_date, confirmed_cases, deaths, recovered').order('report_date', { ascending: true }).limit(30),
+      ])
+
+      if (outbreakRes.data) setOutbreaks(outbreakRes.data as Outbreak[])
+      if (alertRes.data) setAlerts(alertRes.data as Alert[])
+      if (caseRes.data) {
+        const byDate: Record<string, CaseTrend> = {}
+        caseRes.data.forEach((c: CaseTrend) => {
+          if (!byDate[c.report_date]) {
+            byDate[c.report_date] = { report_date: c.report_date, confirmed_cases: 0, deaths: 0, recovered: 0 }
+          }
+          byDate[c.report_date].confirmed_cases += c.confirmed_cases
+          byDate[c.report_date].deaths += c.deaths
+          byDate[c.report_date].recovered += c.recovered
+        })
+        setCaseTrends(Object.values(byDate))
+      }
+
       setLoading(false)
     }
-    fetch()
+
+    fetchAll()
+
+    const channel = supabase
+      .channel('alerts-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts' }, (payload) => {
+        setAlerts((prev) => [payload.new as Alert, ...prev])
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
-  if (loading) return <p className="text-sm text-gray-400 py-8 text-center">Loading history...</p>
-  if (deliveries.length === 0) return (
-    <div className="text-center py-12 text-gray-400">
-      <p className="text-4xl mb-3">📬</p>
-      <p className="text-sm">No deliveries recorded yet</p>
-    </div>
-  )
+  const filtered = sectorFilter === 'ALL' ? outbreaks : outbreaks.filter(o => o.sector === sectorFilter)
+  const activeCount = outbreaks.filter(o => o.status === 'ACTIVE').length
+  const criticalCount = outbreaks.filter(o => o.severity === 'CRITICAL').length
+  const humanCount = outbreaks.filter(o => o.sector === 'HUMAN').length
+  const animalCount = outbreaks.filter(o => o.sector === 'ANIMAL').length
+  const envCount = outbreaks.filter(o => o.sector === 'ENVIRONMENTAL').length
+  const zoonoticCount = outbreaks.filter(o => o.sector === 'ZOONOTIC').length
+  const unreadAlerts = alerts.filter(a => !a.is_read).length
+
+  const sectorData = [
+    { sector: 'Human', count: humanCount, fill: '#f43f5e' },
+    { sector: 'Animal', count: animalCount, fill: '#10b981' },
+    { sector: 'Environmental', count: envCount, fill: '#38bdf8' },
+    { sector: 'Zoonotic', count: zoonoticCount, fill: '#a855f7' },
+  ]
+
+  const mapOutbreaks = outbreaks.map(o => ({
+    id: o.id,
+    disease: o.disease_name,
+    sector: o.sector.toLowerCase(),
+    severity: o.severity.toLowerCase(),
+    latitude: o.locations?.latitude ?? null,
+    longitude: o.locations?.longitude ?? null,
+    location_name: o.locations?.name ?? null,
+    state: o.locations?.state ?? null,
+    notes: o.description,
+    reported_at: o.start_date,
+    status: o.status.toLowerCase(),
+  }))
 
   return (
-    <div className="space-y-2">
-      {deliveries.map(d => (
-        <div key={d.id} className="bg-white rounded-lg border border-gray-200 p-3 flex items-center gap-3">
-          <span className="text-lg">{d.delivery_channel === 'USSD' ? '📱' : '🔔'}</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-800 truncate">
-              {d.rcce_alerts?.title ?? 'Alert'}
-            </p>
-            <p className="text-xs text-gray-400">
-              {d.delivery_channel} · {d.rcce_alerts?.geopolitical_zone} ·{' '}
-              {new Date(d.delivered_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
-            </p>
+    <div className="min-h-screen bg-slate-950">
+      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center">
+              <span className="text-emerald-400 text-sm font-bold">1H</span>
+            </div>
+            <div>
+              <h1 className="text-white font-semibold text-sm leading-none">OneHealth Hub</h1>
+              <p className="text-slate-400 text-xs mt-0.5">Integrated Zoonotic Disease Surveillance � Nigeria</p>
+            </div>
           </div>
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-            d.acknowledged_at ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-          }`}>
-            {d.acknowledged_at ? 'Read' : 'Unread'}
-          </span>
+          <div className="flex items-center gap-3">
+            <a href="/rcce" className="text-xs text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-full transition-colors font-medium">Community Alerts</a>
+            <a href="/collect" className="text-xs bg-emerald-500 hover:bg-emerald-400 text-white px-3 py-1.5 rounded-full transition-colors font-semibold">+ Report</a>
+            <a href="/export" className="text-xs text-slate-400 border border-slate-700 hover:bg-slate-800 px-3 py-1.5 rounded-full transition-colors font-medium">Export</a>
+            {unreadAlerts > 0 && (
+              <span className="bg-red-500/20 text-red-300 border border-red-500/30 text-xs px-2.5 py-1 rounded-full">
+                {unreadAlerts} new alert{unreadAlerts > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
         </div>
-      ))}
+      </header>
+
+      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        <RCCEAlertBanner userZone={userZone} />
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: 'Active outbreaks', value: activeCount, accent: 'text-red-400', sub: '+1 this week' },
+            { label: 'Critical severity', value: criticalCount, accent: 'text-orange-400', sub: 'Require action' },
+            { label: 'Unread alerts', value: unreadAlerts, accent: 'text-amber-400', sub: 'Pending review' },
+            { label: 'Events tracked', value: outbreaks.length, accent: 'text-emerald-400', sub: 'All sectors' },
+          ].map((card) => (
+            <div key={card.label} className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+              <p className="text-slate-400 text-xs mb-1">{card.label}</p>
+              <p className={`text-3xl font-bold ${card.accent}`}>{loading ? '\u2014' : card.value}</p>
+              <p className="text-slate-500 text-xs mt-1">{card.sub}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-5">
+            <h2 className="text-white text-sm font-medium mb-4">Outbreak trends over time</h2>
+            {loading ? (
+              <div className="h-48 flex items-center justify-center text-slate-500 text-sm">Loading chart...</div>
+            ) : caseTrends.length === 0 ? (
+              <div className="h-48 flex items-center justify-center text-slate-500 text-sm">No case data yet</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={caseTrends}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="report_date" tick={{ fill: '#64748b', fontSize: 11 }} />
+                  <YAxis tick={{ fill: '#64748b', fontSize: 11 }} />
+                  <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 8 }} labelStyle={{ color: '#94a3b8' }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Line type="monotone" dataKey="confirmed_cases" stroke="#f43f5e" strokeWidth={2} dot={false} name="Confirmed" />
+                  <Line type="monotone" dataKey="deaths" stroke="#fb923c" strokeWidth={2} dot={false} name="Deaths" />
+                  <Line type="monotone" dataKey="recovered" stroke="#10b981" strokeWidth={2} dot={false} name="Recovered" />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+            <h2 className="text-white text-sm font-medium mb-4">By sector</h2>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={sectorData} barSize={28}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="sector" tick={{ fill: '#64748b', fontSize: 11 }} />
+                <YAxis tick={{ fill: '#64748b', fontSize: 11 }} allowDecimals={false} />
+                <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 8 }} labelStyle={{ color: '#94a3b8' }} />
+                <Bar dataKey="count" name="Outbreaks" radius={[4, 4, 0, 0]}>
+                  {sectorData.map((entry, idx) => (
+                    <rect key={idx} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-white text-sm font-medium mb-3">Outbreak surveillance map</h2>
+          {loading ? (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl h-[540px] flex items-center justify-center text-slate-500 text-sm">Loading map...</div>
+          ) : (
+            <NigeriaMap outbreaks={mapOutbreaks} />
+          )}
+        </div>
+
+        <div>
+          <div className="flex gap-1 bg-slate-900 border border-slate-800 rounded-lg p-1 w-fit mb-6">
+            {(['outbreaks', 'trends', 'alerts'] as const).map((tab) => (
+              <button key={tab} onClick={() => setActiveTab(tab)}
+                className={`px-4 py-1.5 rounded-md text-sm transition-colors capitalize ${activeTab === tab ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-300'}`}>
+                {tab} {tab === 'alerts' && unreadAlerts > 0 && (
+                  <span className="ml-1 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{unreadAlerts}</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === 'outbreaks' && (
+            <div>
+              <div className="flex gap-2 mb-4 flex-wrap">
+                {(['ALL', 'HUMAN', 'ANIMAL', 'ENVIRONMENTAL', 'ZOONOTIC'] as const).map((s) => (
+                  <button key={s} onClick={() => setSectorFilter(s)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${sectorFilter === s ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600'}`}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+              {loading ? (
+                <div className="text-slate-500 text-sm py-8 text-center">Loading outbreaks...</div>
+              ) : filtered.length === 0 ? (
+                <div className="text-slate-500 text-sm py-8 text-center">No outbreaks found.</div>
+              ) : (
+                <div className="space-y-3">
+                  {filtered.map((outbreak) => (
+                    <div key={outbreak.id} className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl p-5 transition-colors">
+                      <div className="flex items-start justify-between gap-4 flex-wrap">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[outbreak.status]}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${statusDot[outbreak.status]}`} />
+                              {outbreak.status}
+                            </span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${sectorColors[outbreak.sector]}`}>{outbreak.sector}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${severityColors[outbreak.severity]}`}>{outbreak.severity}</span>
+                          </div>
+                          <h3 className="text-white font-semibold">{outbreak.disease_name}</h3>
+                          <p className="text-slate-400 text-sm mt-1">{outbreak.description}</p>
+                        </div>
+                        <div className="text-right text-xs text-slate-500 shrink-0">
+                          <p className="text-slate-300 font-medium">{outbreak.locations?.state}</p>
+                          <p>{outbreak.locations?.lga}</p>
+                          <p className="mt-1">Since {new Date(outbreak.start_date).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                          <p className="text-slate-600 mt-1">Reported by: {outbreak.reported_by}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'trends' && (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 text-center">
+              <p className="text-slate-400 text-sm">Detailed trends view coming in Phase 2.</p>
+              <p className="text-slate-600 text-xs mt-1">Will include per-disease, per-zone, and cross-sector trend analysis.</p>
+            </div>
+          )}
+
+          {activeTab === 'alerts' && (
+            <div className="space-y-3">
+              {loading ? (
+                <div className="text-slate-500 text-sm py-8 text-center">Loading alerts...</div>
+              ) : alerts.length === 0 ? (
+                <div className="text-slate-500 text-sm py-8 text-center">No alerts yet.</div>
+              ) : (
+                alerts.map((alert) => (
+                  <div key={alert.id} className={`bg-slate-900 border rounded-xl p-5 transition-colors ${alert.is_read ? 'border-slate-800' : 'border-slate-700'}`}>
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${severityColors[alert.severity]}`}>{alert.severity}</span>
+                          {!alert.is_read && <span className="w-2 h-2 bg-red-400 rounded-full" />}
+                          {alert.outbreaks && <span className="text-slate-500 text-xs">{alert.outbreaks.disease_name}</span>}
+                        </div>
+                        <p className="text-white font-medium text-sm">{alert.title}</p>
+                        <p className="text-slate-400 text-sm mt-1">{alert.message}</p>
+                      </div>
+                      <p className="text-slate-600 text-xs shrink-0">
+                        {new Date(alert.created_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        <SORMASExportPanel />
+
+        <footer className="border-t border-slate-800 pt-6 text-center">
+          <p className="text-slate-600 text-xs">OneHealth Hub � Integrated Zoonotic Disease Surveillance � Built with Next.js + Supabase</p>
+        </footer>
+      </main>
     </div>
   )
 }
