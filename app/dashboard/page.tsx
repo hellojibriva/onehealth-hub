@@ -203,7 +203,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <h1 className="text-white font-semibold text-sm leading-none">OneHealth Hub</h1>
-              <p className="text-slate-400 text-xs mt-0.5">Integrated Zoonotic Disease Surveillance · Nigeria</p>
+              <p className="text-slate-400 text-xs mt-0.5">Integrated Zoonotic Disease Surveillance Â· Nigeria</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -383,7 +383,7 @@ export default function DashboardPage() {
         <SORMASExportPanel />
 
         <footer className="border-t border-slate-800 pt-6 text-center">
-          <p className="text-slate-600 text-xs">OneHealth Hub · Integrated Zoonotic Disease Surveillance · Built with Next.js + Supabase</p>
+          <p className="text-slate-600 text-xs">OneHealth Hub Â· Integrated Zoonotic Disease Surveillance Â· Built with Next.js + Supabase</p>
         </footer>
       </main>
     </div>
