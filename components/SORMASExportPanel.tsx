@@ -3,15 +3,22 @@
 
 import { useEffect, useState } from 'react'
 import { getSupabase } from '@/lib/supabaseClient'
+import { reporterId } from '@/lib/taxonomy'
 
 // ============================================================
-// SORMAS Export Panel — OneHealth Hub
-// Shows USSD reports, allows verification and SORMAS export
+// SORMAS Interoperability Concept — OneHealth Hub
+//
+// Demonstrates the verification-to-export workflow: a community
+// USSD report is triaged, verified by an officer, and rendered
+// as a SORMAS-shaped JSON case file.
+//
+// There is NO live SORMAS connection. The export is a download
+// that a user would import manually; nothing is pushed to any
+// national system from this prototype.
 // ============================================================
 
 interface USSDReport {
   id: string
-  phone_number: string
   report_type: string
   location_text: string
   language: string
@@ -58,7 +65,7 @@ function buildSORMASPayload(report: USSDReport) {
     },
     reportingType: 'COMMUNITY',
     sourceType: 'USSD',
-    sourceDetails: `OneHealth Hub USSD Report · Language: ${LANG_LABELS[report.language] ?? report.language} · Phone: ${report.phone_number}`,
+    sourceDetails: `OneHealth Hub USSD Report · Language: ${LANG_LABELS[report.language] ?? report.language} · Reporter: ${reporterId(report.id)}`,
     investigationStatus: 'PENDING',
     caseClassification: 'NOT_CLASSIFIED',
     outcome: 'NO_OUTCOME',
@@ -93,9 +100,13 @@ export default function SORMASExportPanel() {
   async function fetchReports() {
     const supabase = getSupabase()
     setLoading(true)
+    // Explicit column list: `phone_number` is deliberately not selected, so the
+    // public panel never holds a reporter's contact detail in browser memory.
+    // Column-level exposure at the API is closed separately by RLS
+    // (data/migrations/002_restrict_ussd_reports.sql).
     const { data } = await supabase
       .from('ussd_reports')
-      .select('*')
+      .select('id, report_type, location_text, language, created_at, verified, verified_at, field_notes, disease_suspected, sormas_synced, sormas_synced_at, sormas_case_id')
       .order('created_at', { ascending: false })
       .limit(50)
     if (data) setReports(data as USSDReport[])
@@ -180,9 +191,12 @@ export default function SORMASExportPanel() {
       <div className="px-5 py-4 border-b border-slate-800">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h2 className="text-white font-semibold text-sm">SORMAS Interoperability</h2>
+            <h2 className="text-white font-semibold text-sm">SORMAS Interoperability Concept</h2>
             <p className="text-slate-400 text-xs mt-0.5">
-              Verify community USSD reports and export to SORMAS-compatible format
+              Verify community USSD reports and export to a SORMAS-compatible format
+            </p>
+            <p className="text-amber-300/70 text-xs mt-1.5 max-w-xl">
+              Illustrative interoperability architecture. No live SORMAS connection is implemented in this research prototype.
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -216,18 +230,18 @@ export default function SORMASExportPanel() {
           <Arrow />
           <FlowStep icon="↗️" label="Export to SORMAS" color="text-emerald-400" />
           <Arrow />
-          <FlowStep icon="🏛️" label="SORMAS / DHIS2" color="text-purple-400" />
+          <FlowStep icon="🏛️" label="SORMAS / DHIS2 (conceptual)" color="text-purple-400" />
         </div>
       </div>
 
       {/* Report list */}
       <div className="divide-y divide-slate-800">
         {loading ? (
-          <div className="px-5 py-8 text-center text-slate-500 text-sm">Loading reports...</div>
+          <div className="px-5 py-8 text-center text-slate-500 text-sm">Loading reports…</div>
         ) : filtered.length === 0 ? (
           <div className="px-5 py-8 text-center text-slate-500 text-sm">
             <p className="text-2xl mb-2">📭</p>
-            <p>No {filter === 'all' ? '' : filter} reports yet</p>
+            <p>No data available for this view</p>
           </div>
         ) : (
           filtered.map(report => (
@@ -257,7 +271,7 @@ export default function SORMASExportPanel() {
                   </div>
 
                   <p className="text-slate-400 text-xs">
-                    📍 {report.location_text} · {report.phone_number}
+                    📍 {report.location_text} · Community reporter · {reporterId(report.id)}
                   </p>
                   <p className="text-slate-600 text-xs mt-0.5">
                     {report.created_at ? new Date(report.created_at).toLocaleDateString('en-NG', {
@@ -364,7 +378,7 @@ export default function SORMASExportPanel() {
       {/* Footer note */}
       <div className="px-5 py-3 border-t border-slate-800 bg-slate-950/30">
         <p className="text-slate-600 text-xs">
-          Exported files are SORMAS-compatible JSON. Import manually into SORMAS or configure API credentials for automatic push. Each export is logged in <code className="text-slate-500">sormas_exports</code>.
+          Exported files are SORMAS-shaped JSON, intended for manual import. This prototype holds no SORMAS credentials and pushes to no national system. Each export is logged in <code className="text-slate-500">sormas_exports</code>. Reporter phone numbers are never included in an export.
         </p>
       </div>
     </div>

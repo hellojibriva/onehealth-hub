@@ -184,7 +184,7 @@ export default function RCCEPage() {
                 Risk Communication & Community Engagement
               </h1>
               <p className="text-sm text-gray-500 mt-1">
-                Compose and schedule seasonal health alerts for communities across all six geopolitical zones
+                Compose and schedule seasonal health alerts for communities across all six geopolitical zones, each in that zone's primary language
               </p>
             </div>
             <button
@@ -285,15 +285,19 @@ export default function RCCEPage() {
                       <option key={l.code} value={l.code}>{l.name}</option>
                     ))}
                   </select>
-                  {form.geopolitical_zone && (
+                  {form.geopolitical_zone ? (
                     <p className="text-xs text-gray-400 mt-1">
-                      Auto-selected for {form.geopolitical_zone}
+                      Primary localised pathway for {form.geopolitical_zone}. English remains available for any zone.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Hausa: North East, North West, North Central · Yoruba: South West · Igbo: South East · Pidgin: South South
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <Label>Auto-trigger Month</Label>
+                  <Label>Seasonal Trigger</Label>
                   <select className="Input" value={form.trigger_month ?? ''}
                     onChange={e => setForm(f => ({
                       ...f, trigger_month: e.target.value ? Number(e.target.value) : undefined
@@ -301,7 +305,9 @@ export default function RCCEPage() {
                     <option value="">Manual only</option>
                     {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
                   </select>
-                  <p className="text-xs text-gray-400 mt-1">Alert sends automatically this month</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Month this alert recurs each year, e.g. November for the Lassa dry season, April for the cholera rains.
+                  </p>
                 </div>
               </div>
             </Section>
@@ -344,7 +350,10 @@ export default function RCCEPage() {
               </div>
             </Section>
 
-            <Section title="USSD Alert Screens" subtitle="Max 160 characters per screen">
+            <Section
+              title="USSD Alert Screens — Prototype Preview"
+              subtitle="Max 160 characters per screen. Rendered as the feature phone would display it; the delivery path is an Africa’s Talking USSD workflow demonstrated by this prototype."
+            >
               {[
                 { key: 'ussd_screen_1', label: 'Screen 1 — Opening (greeting + risk statement)', len: ussd1Len },
                 { key: 'ussd_screen_2', label: 'Screen 2 — Prevention tips + menu', len: ussd2Len },
@@ -416,7 +425,7 @@ export default function RCCEPage() {
             </div>
 
             {loading ? (
-              <p className="text-sm text-gray-500 py-8 text-center">Loading alerts...</p>
+              <p className="text-sm text-gray-500 py-8 text-center">Loading alerts…</p>
             ) : filtered.length === 0 ? (
               <div className="text-center py-12 text-gray-400">
                 <p className="text-4xl mb-3">📭</p>
@@ -445,7 +454,7 @@ export default function RCCEPage() {
                             <>
                               <span className="text-xs text-gray-400">·</span>
                               <span className="text-xs text-blue-600 font-medium">
-                                🗓 Triggers: {MONTHS[alert.trigger_month - 1]}
+                                🗓 Seasonal trigger: {MONTHS[alert.trigger_month - 1]}
                               </span>
                             </>
                           )}
@@ -559,11 +568,11 @@ function RCCEDeliveryHistory() {
     fetchHistory()
   }, [])
 
-  if (loading) return <p className="text-sm text-gray-400 py-8 text-center">Loading history...</p>
+  if (loading) return <p className="text-sm text-gray-400 py-8 text-center">Loading delivery history…</p>
   if (deliveries.length === 0) return (
     <div className="text-center py-12 text-gray-400">
       <p className="text-4xl mb-3">📬</p>
-      <p className="text-sm">No deliveries recorded yet</p>
+      <p className="text-sm">No data available for this view</p>
     </div>
   )
 

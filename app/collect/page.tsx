@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { WifiOff, Wifi, Send, ClipboardList, MapPin, Globe } from 'lucide-react';
 import { getSupabase } from '@/lib/supabaseClient';
+import { canonicalState, titleCase, zoneForState } from '@/lib/geo';
+import { CANONICAL_DISEASES, CANONICAL_SIGNALS } from '@/lib/taxonomy';
 
 interface FormData {
   disease_name:  string;
@@ -60,7 +62,10 @@ const T: Record<LangKey, Record<string, string>> = {
     offlineNotice: 'You are offline. Reports will be saved to your device and synced automatically when you reconnect.',
     pendingSync: 'report(s) pending sync',
     syncNow: 'Sync now', syncing: 'Syncing...',
-    disease: 'Disease / Pathogen *', diseasePlaceholder: 'e.g. Lassa fever',
+    disease: 'Disease / Pathogen *', diseasePlaceholder: 'Select a disease or a reported sign',
+    optDisease: 'Disease / hazard', optSignal: 'Community-reported signal (symptom or sign)',
+    signalHint: 'Choose a sign only when no diagnosis has been confirmed. Signals are held for field verification and are never counted as confirmed disease.',
+    offlineCapable: 'Works offline. Reports are stored on this device and synced when connectivity returns.',
     sector: 'Sector *', severity: 'Severity *',
     sectorHuman: 'Human', sectorAnimal: 'Animal', sectorEnv: 'Environmental', sectorZoo: 'Zoonotic',
     severityLow: 'Low', severityModerate: 'Moderate', severityHigh: 'High', severityCritical: 'Critical',
@@ -87,7 +92,10 @@ const T: Record<LangKey, Record<string, string>> = {
     offlineNotice: 'Ba ka kan layi ba. Za a adana rahoton a naurarka kuma a aika shi ta atomatik idan ka sake haduwa da yanar gizo.',
     pendingSync: 'rahoto(ni) da ke jiran aikawa',
     syncNow: 'Aika yanzu', syncing: 'Ana aikawa...',
-    disease: 'Cuta / Kwayar cuta *', diseasePlaceholder: 'misali Zazzabin Lassa',
+    disease: 'Cuta / Kwayar cuta *', diseasePlaceholder: 'Zabi cuta ko alamar da aka bayar da rahoto',
+    optDisease: 'Cuta / Hatsari', optSignal: 'Alamar da al’umma ta bayar da rahoto',
+    signalHint: 'Zabi alama kawai idan ba a tabbatar da cuta ba. Ana ajiye alamu domin tabbatarwa a fili.',
+    offlineCapable: 'Yana aiki ba tare da yanar gizo ba. Ana adana rahoto a naurarka har sai an sami yanar gizo.',
     sector: 'Bangare *', severity: 'Girman Matsala *',
     sectorHuman: 'Dan Adam', sectorAnimal: 'Dabba', sectorEnv: 'Muhalli', sectorZoo: 'Cutar Dabba zuwa Mutum',
     severityLow: 'Kadan', severityModerate: 'Matsakaici', severityHigh: 'Girma', severityCritical: 'Mai Tsanani',
@@ -114,7 +122,10 @@ const T: Record<LangKey, Record<string, string>> = {
     offlineNotice: 'I noghi n ntaneti. A ga-echekwa akuko gi na ngwaoru gi ma ziga ya na akpaghi aka mgbe i nwetaghachiri ntaneti.',
     pendingSync: 'akuko na-echere izipu',
     syncNow: 'Ziga ugbu a', syncing: 'Na-eziga...',
-    disease: 'Oria / Ihe na-ebute oria *', diseasePlaceholder: 'dika Oria Lassa',
+    disease: 'Oria / Ihe na-ebute oria *', diseasePlaceholder: 'Họrọ ọrịa ma ọ bụ akara e kwuru',
+    optDisease: 'Ọrịa / Ihe ize ndụ', optSignal: 'Akara obodo kọrọ',
+    signalHint: 'Họrọ akara naanị mgbe a kwadobeghị ọrịa. A na-echekwa akara maka nkwenye n’ubi.',
+    offlineCapable: 'Ọrụ na-aga n’enweghị ịntanịtị. A na-echekwa akụkọ na ngwaọrụ gị ruo mgbe ịntanịtị lọghachiri.',
     sector: 'Ngalaba *', severity: 'Ogo Ihe Ojoo *',
     sectorHuman: 'Mmadu', sectorAnimal: 'Anumanu', sectorEnv: 'Gburugburu', sectorZoo: 'Oria si n Anumanu gaa Mmadu',
     severityLow: 'Nta', severityModerate: 'Etiti', severityHigh: 'Ukwuu', severityCritical: 'Oke Ihe Ojoo',
@@ -141,7 +152,10 @@ const T: Record<LangKey, Record<string, string>> = {
     offlineNotice: 'O ko si lori ayelujara. A o fi ijabo pamo si ero re ki a si fi ranse laifowoyi nigba ti o ba tun sopo mo ayelujara.',
     pendingSync: 'ijabo(awon) ti n duro de fifiranse',
     syncNow: 'Fi ranse nisisiyi', syncing: 'N fi ranse...',
-    disease: 'Arun / Kokoro Arun *', diseasePlaceholder: 'bii Iba Lassa',
+    disease: 'Arun / Kokoro Arun *', diseasePlaceholder: 'Yan arun tabi ami ti a jabo',
+    optDisease: 'Arun / Ewu', optSignal: 'Ami ti agbegbe jabo',
+    signalHint: 'Yan ami nikan nigba ti a ko ba ti fi arun kan mule. A o pa ami mo fun iwadii ojula.',
+    offlineCapable: 'O n sise lai si ayelujara. A o pa ijabo mo sori ero re titi ayelujara yoo fi pada.',
     sector: 'Eka *', severity: 'Bi O Se Le To *',
     sectorHuman: 'Eniyan', sectorAnimal: 'Eranko', sectorEnv: 'Ayika', sectorZoo: 'Arun Eranko si Eniyan',
     severityLow: 'Kekere', severityModerate: 'Alabode', severityHigh: 'Giga', severityCritical: 'Ideruba',
@@ -168,7 +182,10 @@ const T: Record<LangKey, Record<string, string>> = {
     offlineNotice: 'You no dey online. We go save your report for your device and send am automatic once you get network again.',
     pendingSync: 'report(s) wey dey wait to send',
     syncNow: 'Send am now', syncing: 'E dey send...',
-    disease: 'Disease / Wetin dey cause am *', diseasePlaceholder: 'e.g. Lassa fever',
+    disease: 'Disease / Wetin dey cause am *', diseasePlaceholder: 'Pick disease or signal wey dem report',
+    optDisease: 'Disease / hazard', optSignal: 'Signal wey community report',
+    signalHint: 'Pick signal only if dem never confirm any disease. Signal dey wait for field check.',
+    offlineCapable: 'E dey work without internet. Report go save for your phone until network come back.',
     sector: 'Sector *', severity: 'How E Bad Reach *',
     sectorHuman: 'Human', sectorAnimal: 'Animal', sectorEnv: 'Environment', sectorZoo: 'Animal-to-Human Sickness',
     severityLow: 'Small', severityModerate: 'Middle', severityHigh: 'Plenty', severityCritical: 'E Serious Well Well',
@@ -283,9 +300,13 @@ export default function CollectPage() {
       const supabase = getSupabase();
       let locationId: string | null = null;
 
+      const stateName = canonicalState(form.state) ?? form.state;
+
       const { data: existingLoc } = await supabase
         .from('locations').select('id')
-        .ilike('name', form.location_name).limit(1).maybeSingle();
+        .ilike('name', form.location_name)
+        .eq('state', stateName)
+        .limit(1).maybeSingle();
 
       if (existingLoc) {
         locationId = (existingLoc as unknown as LocationRow).id;
@@ -293,9 +314,9 @@ export default function CollectPage() {
         const { data: newLoc, error: locError } = await supabase
           .from('locations')
           .insert({
-            name: form.location_name, state: form.state,
-            lga: form.lga || null, ward: form.ward || null,
-            geopolitical_zone: '',
+            name: form.location_name, state: stateName,
+            lga: form.lga ? titleCase(form.lga) : null, ward: form.ward || null,
+            geopolitical_zone: zoneForState(form.state) ?? '',
             latitude:  parseFloat(form.latitude)  || 9.082,
             longitude: parseFloat(form.longitude) || 8.675,
           } as any)
@@ -348,9 +369,9 @@ export default function CollectPage() {
           const { data: newLoc, error: locError } = await supabase
             .from('locations')
             .insert({
-              name: item.location_name, state: item.state,
-              lga: item.lga || null, ward: item.ward || null,
-              geopolitical_zone: '',
+              name: item.location_name, state: canonicalState(item.state) ?? item.state,
+              lga: item.lga ? titleCase(item.lga) : null, ward: item.ward || null,
+              geopolitical_zone: zoneForState(item.state) ?? '',
               latitude:  parseFloat(item.latitude)  || 9.082,
               longitude: parseFloat(item.longitude) || 8.675,
             } as any)
@@ -433,20 +454,29 @@ export default function CollectPage() {
           </div>
         )}
 
-        {queueLen > 0 && isOnline && (
-          <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 mb-4">
+        {queueLen > 0 && (
+          <div className="flex items-center justify-between gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 mb-4">
             <p className="text-xs text-blue-700 dark:text-blue-400">
               {queueLen} {t.pendingSync}
             </p>
-            <button
-              onClick={syncQueue}
-              disabled={syncing}
-              className="text-xs font-medium text-blue-600 hover:text-blue-500 disabled:opacity-50"
-            >
-              {syncing ? t.syncing : t.syncNow}
-            </button>
+            {isOnline ? (
+              <button
+                onClick={syncQueue}
+                disabled={syncing}
+                className="text-xs font-medium text-blue-600 hover:text-blue-500 disabled:opacity-50"
+              >
+                {syncing ? t.syncing : t.syncNow}
+              </button>
+            ) : (
+              <span className="text-xs text-blue-500/70">{t.offline}</span>
+            )}
           </div>
         )}
+
+        <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-4 flex items-start gap-1.5">
+          <WifiOff size={12} className="mt-0.5 flex-shrink-0 opacity-60" />
+          {t.offlineCapable}
+        </p>
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 space-y-4">
 
@@ -454,12 +484,22 @@ export default function CollectPage() {
             <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">
               {t.disease}
             </label>
-            <input
+            <select
               value={form.disease_name}
               onChange={e => update('disease_name', e.target.value)}
-              placeholder={t.diseasePlaceholder}
               className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
+            >
+              <option value="">{t.diseasePlaceholder}</option>
+              <optgroup label={t.optDisease}>
+                {CANONICAL_DISEASES.map(d => <option key={d} value={d}>{d}</option>)}
+              </optgroup>
+              <optgroup label={t.optSignal}>
+                {CANONICAL_SIGNALS.map(sig => (
+                  <option key={sig} value={`Community-reported: ${sig}`}>{sig}</option>
+                ))}
+              </optgroup>
+            </select>
+            <p className="text-[11px] text-gray-500 mt-1">{t.signalHint}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

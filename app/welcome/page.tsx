@@ -28,6 +28,8 @@ const CONTENT = {
     ],
     ussd: 'No smartphone needed',
     ussdSub: 'Dial *384*12032026# on any basic phone',
+    prototype: 'Research prototype — a demonstration of an Africa’s Talking USSD reporting workflow. Not a live national reporting service.',
+    ussdDemo: 'Demonstration short-code',
     cta1: 'Explore the Platform',
     cta2: 'Give Your Feedback (5 mins)',
     safe: 'Your report is safe and anonymous. No one will take your animals.',
@@ -48,6 +50,8 @@ const CONTENT = {
     ],
     ussd: 'Ba a buƙatar smartphone',
     ussdSub: 'Buga *384*12032026# a kowane wayar yau da kullun',
+    prototype: 'Samfurin bincike — nunin yadda tsarin bayar da rahoto ta USSD (Africa’s Talking) ke aiki. Ba sabis na gwamnati mai gudana ba ne.',
+    ussdDemo: 'Lambar nuni',
     cta1: 'Bincika Platform din',
     cta2: 'Ba da Ra\u2019ayin Ka (minti 5)',
     safe: 'Rahotonka yana da aminci kuma ba a san wanda ya ba da rahoto ba. Ba za a ƙwace dabbobin ka ba.',
@@ -68,6 +72,8 @@ const CONTENT = {
     ],
     ussd: 'Ko nilo smartphone',
     ussdSub: 'Pe *384*12032026# lori foonu ipilẹ eyikeyi',
+    prototype: 'Àpẹẹrẹ ìwádìwádì — àfihàn bí ètò ìjábọ USSD (Africa’s Talking) ṣe ṅ ṣiṣẹ. Kìí ṣe iṣẹ ìjábọ orílẹ̀-èdè tí ó ń ṣiṣẹ.',
+    ussdDemo: 'Koodu àfihàn',
     cta1: 'Ṣawari Platform naa',
     cta2: 'Fun Wa Ni Ero Rẹ (iṣẹju 5)',
     safe: 'Ijabo rẹ jẹ ailewu ati airi-orukọ. Ko si ẹnikan ti yoo gba eranko rẹ.',
@@ -88,6 +94,8 @@ const CONTENT = {
     ],
     ussd: 'Smartphone achọghị',
     ussdSub: 'Kpọọ *384*12032026# na ekwentị ntọala ọ bụla',
+    prototype: 'Ihe nnwale nyocha — ngosi otú usoro USSD (Africa’s Talking) si arụ ọrụ. Ọ bụghị ọrụ nkwupute mba dị ndụ.',
+    ussdDemo: 'Koodu ngosi',
     cta1: 'Nyochaa Platform ahụ',
     cta2: 'Nye Anyị Echiche Gị (nkeji 5)',
     safe: 'Nkọwa gị dị mma ma anonymous. Ọ dịghị onye ga-ewepụ anụmanụ gị.',
@@ -108,6 +116,8 @@ const CONTENT = {
     ],
     ussd: 'Smartphone no necessary',
     ussdSub: 'Dial *384*12032026# on any ordinary phone',
+    prototype: 'Research prototype — na demonstration of Africa’s Talking USSD reporting workflow. E no be live government service.',
+    ussdDemo: 'Demonstration short-code',
     cta1: 'See the Platform',
     cta2: 'Give Us Your Feedback (5 mins)',
     safe: 'Your report dey safe and nobody go know your name. Nobody go carry your animal.',
@@ -233,6 +243,21 @@ export default function WelcomePage() {
             *384*12032026#
           </span>
           <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 2 }}>{c.ussdSub}</span>
+          <span style={{ color: '#fcd34d', fontSize: 10, marginTop: 6, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>
+            {c.ussdDemo}
+          </span>
+        </div>
+
+        {/* Prototype notice — shown in every language, before any claim about
+            what the platform does, so a reviewer is never misled about scope. */}
+        <div style={{
+          maxWidth: 420, margin: '20px auto 0',
+          background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(252,211,77,0.4)',
+          borderRadius: 14, padding: '10px 14px',
+        }}>
+          <p style={{ color: '#fde68a', fontSize: 12, lineHeight: 1.5, margin: 0 }}>
+            {c.prototype}
+          </p>
         </div>
       </div>
 

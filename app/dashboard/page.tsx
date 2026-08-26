@@ -10,10 +10,26 @@ import {
 } from 'recharts'
 import RCCEAlertBanner from '@/components/RCCEAlertBanner'
 import SORMASExportPanel from '@/components/SORMASExportPanel'
+import { formatPlace, zoneForState } from '@/lib/geo'
+import { normalizeEvent, publicReporter, scrubReporterDetails } from '@/lib/taxonomy'
 
 const NigeriaMap = dynamic(() => import('@/components/NigeriaMap'), { ssr: false })
 
 type Sector = 'HUMAN' | 'ANIMAL' | 'ENVIRONMENTAL' | 'ZOONOTIC' | 'ALL'
+
+// One label set for the four One Health sectors, used by the filter chips.
+const SECTOR_LABELS: Record<Sector, string> = {
+  ALL:           'All sectors',
+  HUMAN:         'Human',
+  ANIMAL:        'Animal',
+  ENVIRONMENTAL: 'Environmental',
+  ZOONOTIC:      'Zoonotic',
+}
+
+const EVENT_TYPE_STYLE: Record<string, string> = {
+  DISEASE: 'bg-slate-500/20 text-slate-300 border border-slate-500/30',
+  SIGNAL:  'bg-teal-500/20 text-teal-300 border border-teal-500/30',
+}
 type Severity = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL' | 'INFO' | 'WARNING'
 type Status = 'ACTIVE' | 'CONTAINED' | 'RESOLVED' | 'MONITORING'
 
@@ -94,7 +110,7 @@ export default function DashboardPage() {
   const [caseTrends, setCaseTrends] = useState<CaseTrend[]>([])
   const [loading, setLoading] = useState(true)
   const [sectorFilter, setSectorFilter] = useState<Sector>('ALL')
-  const [activeTab, setActiveTab] = useState<'outbreaks' | 'trends' | 'alerts'>('outbreaks')
+  const [activeTab, setActiveTab] = useState<'events' | 'trends' | 'alerts'>('events')
   const [userZone, setUserZone] = useState<string | undefined>(undefined)
 
   useEffect(() => {
@@ -109,21 +125,7 @@ export default function DashboardPage() {
           .eq('id', user.id)
           .single()
         if (profile?.state) {
-          const zoneMap: Record<string, string> = {
-            'FCT': 'North Central', 'Nasarawa': 'North Central', 'Niger': 'North Central',
-            'Benue': 'North Central', 'Kogi': 'North Central', 'Kwara': 'North Central', 'Plateau': 'North Central',
-            'Lagos': 'South West', 'Ogun': 'South West', 'Oyo': 'South West',
-            'Osun': 'South West', 'Ondo': 'South West', 'Ekiti': 'South West',
-            'Kano': 'North West', 'Kaduna': 'North West', 'Katsina': 'North West',
-            'Kebbi': 'North West', 'Sokoto': 'North West', 'Zamfara': 'North West', 'Jigawa': 'North West',
-            'Borno': 'North East', 'Yobe': 'North East', 'Adamawa': 'North East',
-            'Taraba': 'North East', 'Bauchi': 'North East', 'Gombe': 'North East',
-            'Anambra': 'South East', 'Enugu': 'South East', 'Imo': 'South East',
-            'Abia': 'South East', 'Ebonyi': 'South East',
-            'Rivers': 'South South', 'Delta': 'South South', 'Edo': 'South South',
-            'Bayelsa': 'South South', 'Cross River': 'South South', 'Akwa Ibom': 'South South',
-          }
-          setUserZone(zoneMap[profile.state] ?? undefined)
+          setUserZone(zoneForState(profile.state) ?? undefined)
         }
       }
 
@@ -163,7 +165,24 @@ export default function DashboardPage() {
     return () => { supabase.removeChannel(channel) }
   }, [])
 
-  const filtered = sectorFilter === 'ALL' ? outbreaks : outbreaks.filter(o => o.sector === sectorFilter)
+  // Every record is classified once, here, so the cards, the map and the counts
+  // can never disagree about what an event is called or what kind of event it is.
+  const events = outbreaks.map(o => {
+    const event = normalizeEvent(o.disease_name, o.report_source)
+    return {
+      ...o,
+      event,
+      place: formatPlace(o.locations?.state, o.locations?.lga),
+      reporter: publicReporter(o.reported_by, o.report_source, o.id),
+      summary: scrubReporterDetails(o.description),
+    }
+  })
+
+  const filtered = sectorFilter === 'ALL' ? events : events.filter(o => o.sector === sectorFilter)
+  const signalCount = events.filter(e => e.event.eventType === 'SIGNAL').length
+
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const newThisWeek = events.filter(e => new Date(e.start_date).getTime() >= sevenDaysAgo).length
   const activeCount = outbreaks.filter(o => o.status === 'ACTIVE').length
   const criticalCount = outbreaks.filter(o => o.severity === 'CRITICAL').length
   const humanCount = outbreaks.filter(o => o.sector === 'HUMAN').length
@@ -179,16 +198,21 @@ export default function DashboardPage() {
     { sector: 'Zoonotic', count: zoonoticCount, fill: '#a855f7' },
   ]
 
-  const mapOutbreaks = outbreaks.map(o => ({
+  const mapOutbreaks = events.map(o => ({
     id: o.id,
-    disease: o.disease_name,
+    disease: o.event.label,
+    eventType: o.event.eventType,
+    eventTypeLabel: o.event.eventTypeLabel,
+    signal: o.event.signal,
     sector: o.sector.toLowerCase(),
     severity: o.severity.toLowerCase(),
     latitude: o.locations?.latitude ?? null,
     longitude: o.locations?.longitude ?? null,
     location_name: o.locations?.name ?? null,
     state: o.locations?.state ?? null,
-    notes: o.description,
+    lga: o.locations?.lga ?? null,
+    place: o.place,
+    notes: o.summary,
     reported_at: o.start_date,
     status: o.status.toLowerCase(),
   }))
@@ -207,9 +231,10 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <a href="/rcce" className="text-xs text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-full transition-colors font-medium">Community Alerts</a>
+            <span className="text-[10px] uppercase tracking-widest text-amber-300/80 border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 rounded-full font-semibold">Research prototype</span>
+            <a href="/welcome" className="text-xs text-slate-400 border border-slate-700 hover:bg-slate-800 px-3 py-1.5 rounded-full transition-colors font-medium">How it works</a>
+            <a href="/rcce" className="text-xs text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-full transition-colors font-medium">RCCE alerts</a>
             <a href="/collect" className="text-xs bg-emerald-500 hover:bg-emerald-400 text-white px-3 py-1.5 rounded-full transition-colors font-semibold">+ Report</a>
-            <a href="/export" className="text-xs text-slate-400 border border-slate-700 hover:bg-slate-800 px-3 py-1.5 rounded-full transition-colors font-medium">Export</a>
             {unreadAlerts > 0 && (
               <span className="bg-red-500/20 text-red-300 border border-red-500/30 text-xs px-2.5 py-1 rounded-full">
                 {unreadAlerts} new alert{unreadAlerts > 1 ? 's' : ''}
@@ -222,12 +247,14 @@ export default function DashboardPage() {
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         <RCCEAlertBanner userZone={userZone} />
 
+        <SurveillancePipeline />
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Active outbreaks', value: activeCount, accent: 'text-red-400', sub: '+1 this week' },
+            { label: 'Active events', value: activeCount, accent: 'text-red-400', sub: `${newThisWeek} new in last 7 days` },
             { label: 'Critical severity', value: criticalCount, accent: 'text-orange-400', sub: 'Require action' },
-            { label: 'Unread alerts', value: unreadAlerts, accent: 'text-amber-400', sub: 'Pending review' },
-            { label: 'Events tracked', value: outbreaks.length, accent: 'text-emerald-400', sub: 'All sectors' },
+            { label: 'Community signals', value: signalCount, accent: 'text-teal-400', sub: 'Awaiting verification' },
+            { label: 'Events tracked', value: outbreaks.length, accent: 'text-emerald-400', sub: 'All four sectors' },
           ].map((card) => (
             <div key={card.label} className="bg-slate-900 border border-slate-800 rounded-xl p-5">
               <p className="text-slate-400 text-xs mb-1">{card.label}</p>
@@ -239,11 +266,11 @@ export default function DashboardPage() {
 
         <div className="grid md:grid-cols-3 gap-6">
           <div className="md:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-5">
-            <h2 className="text-white text-sm font-medium mb-4">Outbreak trends over time</h2>
+            <h2 className="text-white text-sm font-medium mb-4">Reported case trends over time</h2>
             {loading ? (
-              <div className="h-48 flex items-center justify-center text-slate-500 text-sm">Loading chart...</div>
+              <div className="h-48 flex items-center justify-center text-slate-500 text-sm">Loading chart…</div>
             ) : caseTrends.length === 0 ? (
-              <div className="h-48 flex items-center justify-center text-slate-500 text-sm">No case data yet</div>
+              <div className="h-48 flex items-center justify-center text-slate-500 text-sm">No data available for this view</div>
             ) : (
               <ResponsiveContainer width="100%" height={180}>
                 <LineChart data={caseTrends}>
@@ -261,6 +288,11 @@ export default function DashboardPage() {
           </div>
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
             <h2 className="text-white text-sm font-medium mb-4">By sector</h2>
+            {loading ? (
+              <div className="h-[180px] flex items-center justify-center text-slate-500 text-sm">Loading chart…</div>
+            ) : outbreaks.length === 0 ? (
+              <div className="h-[180px] flex items-center justify-center text-slate-500 text-sm">No data available for this view</div>
+            ) : (
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={sectorData} barSize={28}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -274,13 +306,17 @@ export default function DashboardPage() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            )}
           </div>
         </div>
 
         <div>
-          <h2 className="text-white text-sm font-medium mb-3">Outbreak surveillance map</h2>
+          <div className="flex items-baseline justify-between gap-4 flex-wrap mb-3">
+            <h2 className="text-white text-sm font-medium">Situational awareness — GIS</h2>
+            <p className="text-slate-500 text-xs">Marker size = severity · colour = sector</p>
+          </div>
           {loading ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl h-[540px] flex items-center justify-center text-slate-500 text-sm">Loading map...</div>
+            <div className="bg-slate-900 border border-slate-800 rounded-xl h-[540px] flex items-center justify-center text-slate-500 text-sm">Loading map…</div>
           ) : (
             <NigeriaMap outbreaks={mapOutbreaks} />
           )}
@@ -288,7 +324,7 @@ export default function DashboardPage() {
 
         <div>
           <div className="flex gap-1 bg-slate-900 border border-slate-800 rounded-lg p-1 w-fit mb-6">
-            {(['outbreaks', 'trends', 'alerts'] as const).map((tab) => (
+            {(['events', 'trends', 'alerts'] as const).map((tab) => (
               <button key={tab} onClick={() => setActiveTab(tab)}
                 className={`px-4 py-1.5 rounded-md text-sm transition-colors capitalize ${activeTab === tab ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-300'}`}>
                 {tab} {tab === 'alerts' && unreadAlerts > 0 && (
@@ -298,20 +334,20 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {activeTab === 'outbreaks' && (
+          {activeTab === 'events' && (
             <div>
               <div className="flex gap-2 mb-4 flex-wrap">
                 {(['ALL', 'HUMAN', 'ANIMAL', 'ENVIRONMENTAL', 'ZOONOTIC'] as const).map((s) => (
                   <button key={s} onClick={() => setSectorFilter(s)}
                     className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${sectorFilter === s ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600'}`}>
-                    {s}
+                    {SECTOR_LABELS[s]}
                   </button>
                 ))}
               </div>
               {loading ? (
-                <div className="text-slate-500 text-sm py-8 text-center">Loading outbreaks...</div>
+                <div className="text-slate-500 text-sm py-8 text-center">Loading events…</div>
               ) : filtered.length === 0 ? (
-                <div className="text-slate-500 text-sm py-8 text-center">No outbreaks found.</div>
+                <div className="text-slate-500 text-sm py-8 text-center">No data available for this view</div>
               ) : (
                 <div className="space-y-3">
                   {filtered.map((outbreak) => (
@@ -323,17 +359,28 @@ export default function DashboardPage() {
                               <span className={`w-1.5 h-1.5 rounded-full ${statusDot[outbreak.status]}`} />
                               {outbreak.status}
                             </span>
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${sectorColors[outbreak.sector]}`}>{outbreak.sector}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${EVENT_TYPE_STYLE[outbreak.event.eventType]}`}>
+                              {outbreak.event.eventTypeLabel}
+                            </span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${sectorColors[outbreak.sector]}`}>
+                              {SECTOR_LABELS[outbreak.sector] ?? outbreak.sector}
+                            </span>
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${severityColors[outbreak.severity]}`}>{outbreak.severity}</span>
                           </div>
-                          <h3 className="text-white font-semibold">{outbreak.disease_name}</h3>
-                          <p className="text-slate-400 text-sm mt-1">{outbreak.description}</p>
+                          <h3 className="text-white font-semibold">{outbreak.event.label}</h3>
+                          {outbreak.event.eventType === 'SIGNAL' && (
+                            <p className="text-teal-300/80 text-xs mt-1">
+                              Symptom/sign · not a diagnosis. Requires field verification.
+                            </p>
+                          )}
+                          {outbreak.summary && (
+                            <p className="text-slate-400 text-sm mt-1">{outbreak.summary}</p>
+                          )}
                         </div>
                         <div className="text-right text-xs text-slate-500 shrink-0">
-                          <p className="text-slate-300 font-medium">{outbreak.locations?.state}</p>
-                          <p>{outbreak.locations?.lga}</p>
+                          <p className="text-slate-300 font-medium">{outbreak.place}</p>
                           <p className="mt-1">Since {new Date(outbreak.start_date).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                          <p className="text-slate-600 mt-1">Reported by: {outbreak.reported_by}</p>
+                          <p className="text-slate-600 mt-1">{outbreak.reporter}</p>
                         </div>
                       </div>
                     </div>
@@ -353,9 +400,9 @@ export default function DashboardPage() {
           {activeTab === 'alerts' && (
             <div className="space-y-3">
               {loading ? (
-                <div className="text-slate-500 text-sm py-8 text-center">Loading alerts...</div>
+                <div className="text-slate-500 text-sm py-8 text-center">Loading alerts…</div>
               ) : alerts.length === 0 ? (
-                <div className="text-slate-500 text-sm py-8 text-center">No alerts yet.</div>
+                <div className="text-slate-500 text-sm py-8 text-center">No data available for this view</div>
               ) : (
                 alerts.map((alert) => (
                   <div key={alert.id} className={`bg-slate-900 border rounded-xl p-5 transition-colors ${alert.is_read ? 'border-slate-800' : 'border-slate-700'}`}>
@@ -382,10 +429,49 @@ export default function DashboardPage() {
 
         <SORMASExportPanel />
 
-        <footer className="border-t border-slate-800 pt-6 text-center">
+        <footer className="border-t border-slate-800 pt-6 text-center space-y-1">
           <p className="text-slate-600 text-xs">OneHealth Hub · Integrated Zoonotic Disease Surveillance · Built with Next.js + Supabase</p>
+          <p className="text-slate-600 text-xs">
+            Research prototype — not a production national surveillance system. Reporter identities are not published.
+          </p>
         </footer>
       </main>
     </div>
+  )
+}
+
+// A compact statement of what the platform is and how a report travels through
+// it. Kept as a static strip rather than a chart: it explains the architecture,
+// it does not claim to measure anything.
+function SurveillancePipeline() {
+  const stages = [
+    { label: 'Community / field', detail: 'USSD · offline field form' },
+    { label: 'Surveillance', detail: 'Human · Animal · Environmental · Zoonotic' },
+    { label: 'Situational awareness', detail: 'GIS · severity · trends' },
+    { label: 'Response', detail: 'RCCE in the zone’s language' },
+  ]
+
+  return (
+    <section className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+      <p className="text-slate-300 text-sm">
+        A multilingual digital One Health surveillance prototype for Nigeria.
+      </p>
+      <div className="mt-4 flex flex-wrap items-stretch gap-2">
+        {stages.map((stage, i) => (
+          <div key={stage.label} className="flex items-stretch gap-2">
+            <div className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 min-w-[9.5rem]">
+              <p className="text-white text-xs font-semibold">{stage.label}</p>
+              <p className="text-slate-500 text-[11px] mt-0.5">{stage.detail}</p>
+            </div>
+            {i < stages.length - 1 && (
+              <span className="self-center text-slate-700 text-sm" aria-hidden="true">→</span>
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="text-slate-600 text-xs mt-3">
+        Research prototype. The USSD and SORMAS pathways are demonstrated workflows, not live production integrations.
+      </p>
+    </section>
   )
 }

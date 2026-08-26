@@ -1,6 +1,8 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { canonicalState, titleCase, zoneForState } from '@/lib/geo'
+import type { CanonicalSignal } from '@/lib/taxonomy'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -80,8 +82,13 @@ const MENUS = {
   },
 }
 
-const LANG_TO_ZONE: Record<string, string> = {
-  'EN': 'North Central',
+// Default zone to fall back on when the caller has not told us their state.
+// Hausa is the localised pathway for all three northern zones, so North West is
+// only a starting point — getLatestAlert() widens the search to the language
+// alone if that zone has nothing. English is the general language and belongs to
+// no single zone, so it has no default.
+const LANG_TO_ZONE: Record<string, string | null> = {
+  'EN': null,
   'HA': 'North West',
   'IG': 'South East',
   'YO': 'South West',
@@ -92,22 +99,10 @@ const LANG_CODE_MAP: Record<string, string> = {
   'EN': 'en', 'HA': 'ha', 'IG': 'ig', 'YO': 'yo', 'PCM': 'pcm'
 }
 
-const STATE_TO_ZONE: Record<string, string> = {
-  'fct': 'North Central', 'nasarawa': 'North Central', 'niger': 'North Central',
-  'benue': 'North Central', 'kogi': 'North Central', 'kwara': 'North Central', 'plateau': 'North Central',
-  'lagos': 'South West', 'ogun': 'South West', 'oyo': 'South West',
-  'osun': 'South West', 'ondo': 'South West', 'ekiti': 'South West',
-  'kano': 'North West', 'kaduna': 'North West', 'katsina': 'North West',
-  'kebbi': 'North West', 'sokoto': 'North West', 'zamfara': 'North West', 'jigawa': 'North West',
-  'borno': 'North East', 'yobe': 'North East', 'adamawa': 'North East',
-  'taraba': 'North East', 'bauchi': 'North East', 'gombe': 'North East',
-  'anambra': 'South East', 'enugu': 'South East', 'imo': 'South East',
-  'abia': 'South East', 'ebonyi': 'South East',
-  'rivers': 'South South', 'delta': 'South South', 'edo': 'South South',
-  'bayelsa': 'South South', 'cross river': 'South South', 'akwa ibom': 'South South',
-}
 
-const SYMPTOM_LABELS: Record<string, Record<string, string>> = {
+// Sign/symptom menu options, expressed in the canonical signal vocabulary so a
+// USSD report lands on the dashboard under the same label the map filters use.
+const SYMPTOM_LABELS: Record<string, Record<string, CanonicalSignal>> = {
   HUMAN: {
     '1': 'Fever', '2': 'Diarrhea/vomiting', '3': 'Skin rash/sores',
     '4': 'Breathing difficulty', '5': 'Other (unspecified)',
@@ -124,16 +119,21 @@ const SYMPTOM_LABELS: Record<string, Record<string, string>> = {
 
 type LangKey = 'EN' | 'HA' | 'IG' | 'YO' | 'PCM'
 
-async function getLatestAlert(zone: string, langCode: string): Promise<string | null> {
-  const { data } = await supabase
-    .from('rcce_alerts')
-    .select('body_text, disease, prevention_tips, where_to_go, ussd_screen_1')
-    .eq('status', 'SENT')
-    .eq('geopolitical_zone', zone)
-    .eq('language_code', langCode)
-    .order('sent_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+async function getLatestAlert(zone: string | null, langCode: string): Promise<string | null> {
+  async function query(withZone: boolean) {
+    let q = supabase
+      .from('rcce_alerts')
+      .select('body_text, disease, prevention_tips, where_to_go, ussd_screen_1')
+      .eq('status', 'SENT')
+      .eq('language_code', langCode)
+    if (withZone && zone) q = q.eq('geopolitical_zone', zone)
+    const { data } = await q.order('sent_at', { ascending: false }).limit(1).maybeSingle()
+    return data
+  }
+
+  // Prefer the caller's own zone; otherwise fall back to the most recent alert
+  // in their language, since Hausa serves three zones and English serves all six.
+  const data = (zone ? await query(true) : null) ?? await query(false)
 
   if (!data) return null
   if (data.ussd_screen_1) return data.ussd_screen_1
@@ -202,7 +202,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (choice === '2') {
-      const zone = LANG_TO_ZONE[lang] ?? 'North Central'
+      const zone = LANG_TO_ZONE[lang] ?? null
       const langCode = LANG_CODE_MAP[lang] ?? 'en'
       const alertText = await getLatestAlert(zone, langCode)
       const response = alertText ?? menu.no_alerts
@@ -270,14 +270,18 @@ export async function POST(req: NextRequest) {
     const townInput = inputs[5]?.trim() || 'Unspecified'
     const ref = Math.random().toString(36).substring(2, 8).toUpperCase()
 
-    const symptomLabel = SYMPTOM_LABELS[reportType]?.[symptomChoice] ?? 'Unspecified'
-    const zone = STATE_TO_ZONE[stateInput.toLowerCase()] ?? LANG_TO_ZONE[lang] ?? 'North Central'
+    const symptomLabel = SYMPTOM_LABELS[reportType]?.[symptomChoice] ?? 'Other (unspecified)'
+    const stateName = canonicalState(stateInput) ?? 'Unspecified'
+    const townName = townInput === 'Unspecified' ? 'Unspecified' : titleCase(townInput)
+    const zone = zoneForState(stateInput) ?? LANG_TO_ZONE[lang] ?? 'Unassigned'
 
-    // Keep the raw audit log
+    // Keep the raw audit log. This table holds the reporter's phone number so a
+    // field officer can follow up; it must not be exposed to unauthenticated
+    // readers (see data/migrations/002_restrict_ussd_reports.sql).
     await supabase.from('ussd_reports').insert({
       phone_number: phoneNumber,
       report_type: reportType,
-      location_text: `${stateInput}, ${townInput}`,
+      location_text: `${stateName}, ${townName}`,
       language: lang,
       synced: true,
     })
@@ -288,7 +292,7 @@ export async function POST(req: NextRequest) {
 
       const { data: existingLoc } = await supabase
         .from('locations').select('id')
-        .ilike('name', townInput).limit(1).maybeSingle()
+        .ilike('name', townName).eq('state', stateName).limit(1).maybeSingle()
 
       if (existingLoc) {
         locationId = existingLoc.id
@@ -296,11 +300,13 @@ export async function POST(req: NextRequest) {
         const { data: newLoc } = await supabase
           .from('locations')
           .insert({
-            name: townInput,
-            state: stateInput,
-            lga: townInput,
+            name: townName,
+            state: stateName,
+            lga: townName,
             ward: null,
             geopolitical_zone: zone,
+            // Placed at the national centroid until a field officer confirms the
+            // town during follow-up. Coordinates are deliberately not guessed.
             latitude: 9.082,
             longitude: 8.675,
           })
@@ -308,6 +314,9 @@ export async function POST(req: NextRequest) {
         locationId = newLoc?.id ?? null
       }
 
+      // The reporter's phone number stays in `ussd_reports` (the audit log an
+      // officer needs for follow-up) and is deliberately NOT written into
+      // `outbreaks`, which is read by the public dashboard.
       await supabase.from('outbreaks').insert({
         disease_name: `Community-reported: ${symptomLabel}`,
         sector: reportType,
@@ -316,8 +325,8 @@ export async function POST(req: NextRequest) {
         report_source: 'COMMUNITY',
         location_id: locationId,
         start_date: new Date().toISOString().slice(0, 10),
-        description: `Reported via USSD by ${phoneNumber}. Sign/symptom: ${symptomLabel}. State entered: "${stateInput}", Town/LGA entered: "${townInput}". Language: ${lang}. Follow-up required to confirm details.`,
-        reported_by: phoneNumber,
+        description: `Reported via USSD · Community reporter. Sign/symptom: ${symptomLabel}. State: ${stateName}, Town/LGA: ${townName}. Language: ${lang}. Follow-up required to confirm details.`,
+        reported_by: null,
       })
     } catch (err) {
       console.error('USSD-to-outbreaks sync failed:', err)
