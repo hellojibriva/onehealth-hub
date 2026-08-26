@@ -276,7 +276,7 @@ export default function NigeriaMap({ outbreaks }: Props) {
         });
 
         const isSignal = o.event.eventType === 'SIGNAL';
-        const place = o.place ?? formatPlace(o.state, o.lga);
+        const place = o.place ?? formatPlace(o.state, o.lga, o.location_name);
         const notes = scrubReporterDetails(o.notes);
 
         marker.bindPopup(`
@@ -288,6 +288,8 @@ export default function NigeriaMap({ outbreaks }: Props) {
             ${isSignal ? '<span style="color:#666">Symptom/sign:</span> ' + o.event.label + '<br/>' : ''}
             <span style="color:#666">Sector:</span> ${sectorLabel(o.sector)}<br/>
             <span style="color:#666">Location:</span> ${place}<br/>
+            ${o.location_name && o.location_name.toLowerCase() !== (o.lga ?? '').toLowerCase()
+              ? `<span style="color:#666">Site:</span> ${o.location_name}<br/>` : ''}
             <span style="color:#666">Severity:</span>
             <span style="font-weight:600;color:${
               o.severity === 'critical' ? '#E24B4A' :

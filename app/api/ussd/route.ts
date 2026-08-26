@@ -302,7 +302,11 @@ export async function POST(req: NextRequest) {
           .insert({
             name: townName,
             state: stateName,
-            lga: townName,
+            // The USSD prompt asks for "your LGA or town", so we do not know
+            // which we were given. Recording a settlement as its own LGA is how
+            // Doko — a town in Garki LGA — became a Jigawa LGA in the data.
+            // Left null for a field officer to establish during follow-up.
+            lga: null,
             ward: null,
             geopolitical_zone: zone,
             // Placed at the national centroid until a field officer confirms the

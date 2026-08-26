@@ -172,7 +172,7 @@ export default function DashboardPage() {
     return {
       ...o,
       event,
-      place: formatPlace(o.locations?.state, o.locations?.lga),
+      place: formatPlace(o.locations?.state, o.locations?.lga, o.locations?.name),
       reporter: publicReporter(o.reported_by, o.report_source, o.id),
       summary: scrubReporterDetails(o.description),
     }
