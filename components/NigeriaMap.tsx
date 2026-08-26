@@ -1,13 +1,38 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { OutbreakEvent } from '@/types/outbreak';
+import { canonicalState, formatPlace } from '@/lib/geo';
+import { normalizeEvent, scrubReporterDetails } from '@/lib/taxonomy';
 
 type Disease = 'all' | string;
 type Sector  = 'all' | 'human' | 'animal' | 'environmental' | 'zoonotic';
 
+/**
+ * The map accepts records that have already been through the taxonomy layer.
+ * `eventType`/`signal` may be absent (the component is also usable with raw
+ * rows), in which case they are derived here rather than guessed at render time.
+ */
+export interface MapEvent {
+  id: string;
+  disease: string;
+  eventType?: 'DISEASE' | 'SIGNAL';
+  eventTypeLabel?: string;
+  signal?: string | null;
+  sector: string;
+  severity: string;
+  latitude: number | null;
+  longitude: number | null;
+  location_name?: string | null;
+  state?: string | null;
+  lga?: string | null;
+  place?: string | null;
+  notes?: string | null;
+  reported_at: string;
+  status?: string;
+}
+
 interface Props {
-  outbreaks: OutbreakEvent[];
+  outbreaks: MapEvent[];
 }
 
 const SECTOR_COLORS: Record<string, string> = {
@@ -86,6 +111,17 @@ function Toggle({ label, checked, onChange, id }: {
   );
 }
 
+const SECTOR_LABELS: Record<string, string> = {
+  human:         'Human',
+  animal:        'Animal',
+  environmental: 'Environmental',
+  zoonotic:      'Zoonotic',
+};
+
+function sectorLabel(sector: string): string {
+  return SECTOR_LABELS[sector] ?? sector;
+}
+
 function getChoroplethColor(count: number): string {
   if (count === 0) return 'rgba(200,200,200,0.15)';
   if (count === 1) return 'rgba(254,229,217,0.6)';
@@ -109,7 +145,23 @@ export default function NigeriaMap({ outbreaks }: Props) {
   const [showChoropleth, setShowChoropleth] = useState(false);
   const [ready,        setReady]        = useState(false);
 
-  const diseaseOptions = ['all', ...Array.from(new Set(outbreaks.map(o => o.disease))).sort()];
+  // Normalise once, then build the filter from canonical labels. This is what
+  // removes "Bruscellosis"/"Lassa fevee"/"Lassa fever" duplicates from the list
+  // and keeps community signals in their own group.
+  const normalized = outbreaks.map(o => {
+    const event = o.eventType
+      ? { eventType: o.eventType, label: o.disease, signal: o.signal ?? null, eventTypeLabel: o.eventTypeLabel ?? '' }
+      : normalizeEvent(o.disease, null);
+    return { ...o, event };
+  });
+
+  const diseaseNames = Array.from(new Set(
+    normalized.filter(o => o.event.eventType === 'DISEASE').map(o => o.event.label)
+  )).sort();
+
+  const signalNames = Array.from(new Set(
+    normalized.filter(o => o.event.eventType === 'SIGNAL').map(o => o.event.label)
+  )).sort();
 
   useEffect(() => {
     if (typeof window === 'undefined' || leafletRef.current) return;
@@ -164,8 +216,8 @@ export default function NigeriaMap({ outbreaks }: Props) {
     choroRef.current.forEach(c => c.remove());
     choroRef.current = [];
 
-    const filtered = outbreaks.filter(o => {
-      const diseaseMatch = disease === 'all' || o.disease === disease;
+    const filtered = normalized.filter(o => {
+      const diseaseMatch = disease === 'all' || o.event.label === disease;
       const sectorMatch  = sector  === 'all' || o.sector  === sector;
       return diseaseMatch && sectorMatch;
     });
@@ -173,10 +225,7 @@ export default function NigeriaMap({ outbreaks }: Props) {
     // ── Choropleth layer ──────────────────────────────────────────
     if (showChoropleth) {
       NIGERIA_STATES.forEach(state => {
-        const count = filtered.filter(o =>
-          o.state?.toLowerCase().includes(state.name.toLowerCase()) ||
-          state.name.toLowerCase().includes(o.state?.toLowerCase() ?? '')
-        ).length;
+        const count = filtered.filter(o => canonicalState(o.state) === state.name).length;
 
         const circle = L.circle([state.lat, state.lng], {
           radius:      count === 0 ? 40000 : 55000 + count * 15000,
@@ -226,17 +275,25 @@ export default function NigeriaMap({ outbreaks }: Props) {
           fillOpacity: 0.85,
         });
 
+        const isSignal = o.event.eventType === 'SIGNAL';
+        const place = o.place ?? formatPlace(o.state, o.lga);
+        const notes = scrubReporterDetails(o.notes);
+
         marker.bindPopup(`
-          <div style="min-width:160px;font-size:13px;line-height:1.8">
-            <strong>${o.location_name ?? 'Unknown'}</strong><br/>
-            <span style="color:#666">Disease:</span> ${o.disease}<br/>
-            <span style="color:#666">Sector:</span> ${o.sector}<br/>
+          <div style="min-width:200px;font-size:13px;line-height:1.7">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:${isSignal ? '#0f766e' : '#475569'}">
+              ${o.eventTypeLabel ?? (isSignal ? 'Community-reported signal' : 'Disease event')}
+            </div>
+            <strong style="font-size:14px">${o.event.label}</strong><br/>
+            ${isSignal ? '<span style="color:#666">Symptom/sign:</span> ' + o.event.label + '<br/>' : ''}
+            <span style="color:#666">Sector:</span> ${sectorLabel(o.sector)}<br/>
+            <span style="color:#666">Location:</span> ${place}<br/>
             <span style="color:#666">Severity:</span>
             <span style="font-weight:600;color:${
               o.severity === 'critical' ? '#E24B4A' :
               o.severity === 'high'     ? '#BA7517' : '#1D9E75'
             }">${o.severity}</span><br/>
-            ${o.notes ? `<span style="color:#666">Notes:</span> ${o.notes}<br/>` : ''}
+            ${notes ? `<span style="color:#666">Notes:</span> ${notes}<br/>` : ''}
             <span style="color:#666">Reported:</span> ${new Date(o.reported_at).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' })}
           </div>
         `);
@@ -247,8 +304,8 @@ export default function NigeriaMap({ outbreaks }: Props) {
     }
   }, [ready, outbreaks, disease, sector, showHeat, showLayers, showChoropleth]);
 
-  const filteredCount = outbreaks.filter(o =>
-    (disease === 'all' || o.disease === disease) &&
+  const filteredCount = normalized.filter(o =>
+    (disease === 'all' || o.event.label === disease) &&
     (sector  === 'all' || o.sector  === sector)
   ).length;
 
@@ -258,16 +315,24 @@ export default function NigeriaMap({ outbreaks }: Props) {
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
         <div className="flex items-center gap-2">
-          <label htmlFor="diseaseFilter" className="text-xs text-gray-500 font-medium">Disease</label>
+          <label htmlFor="diseaseFilter" className="text-xs text-gray-500 font-medium">Event</label>
           <select
             id="diseaseFilter"
             value={disease}
             onChange={e => setDisease(e.target.value)}
             className="text-xs border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
           >
-            {diseaseOptions.map(d => (
-              <option key={d} value={d}>{d === 'all' ? 'All diseases' : d}</option>
-            ))}
+            <option value="all">All events</option>
+            {diseaseNames.length > 0 && (
+              <optgroup label="Diseases">
+                {diseaseNames.map(d => <option key={d} value={d}>{d}</option>)}
+              </optgroup>
+            )}
+            {signalNames.length > 0 && (
+              <optgroup label="Community-reported signals">
+                {signalNames.map(d => <option key={d} value={d}>{d}</option>)}
+              </optgroup>
+            )}
           </select>
         </div>
 
@@ -302,7 +367,7 @@ export default function NigeriaMap({ outbreaks }: Props) {
         {Object.entries(SECTOR_COLORS).map(([s, c]) => (
           <div key={s} className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
             <span className="w-3 h-3 rounded-full inline-block" style={{ background: c }} />
-            {s.charAt(0).toUpperCase() + s.slice(1)}
+            {sectorLabel(s)}
           </div>
         ))}
         {showChoropleth && (

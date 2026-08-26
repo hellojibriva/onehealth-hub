@@ -2,6 +2,8 @@
 // RCCE MODULE TYPES — OneHealth Hub
 // ============================================================
 
+import { CANONICAL_DISEASES } from './taxonomy'
+
 export type AlertType = 'SEASONAL' | 'OUTBREAK' | 'ADVISORY' | 'USSD'
 export type AlertStatus = 'DRAFT' | 'SCHEDULED' | 'SENT' | 'ARCHIVED'
 export type DeliveryChannel = 'APP' | 'USSD' | 'SMS'
@@ -58,36 +60,35 @@ export interface RCCESeason {
   description: string
 }
 
-// Six geopolitical zones of Nigeria
-export const GEOPOLITICAL_ZONES = [
-  'North West',
-  'North East',
-  'North Central',
-  'South West',
-  'South East',
-  'South South',
-] as const
+// Six geopolitical zones of Nigeria — re-exported from the single
+// geography source of truth so zone names never diverge.
+export { GEOPOLITICAL_ZONES } from './geo'
+export type { GeopoliticalZone } from './geo'
 
-export type GeopoliticalZone = typeof GEOPOLITICAL_ZONES[number]
-
-// Zone → primary language mapping
-export const ZONE_PRIMARY_LANGUAGE: Record<GeopoliticalZone, { name: string; code: string }> = {
+// Zone → primary localised pathway.
+//
+// The three northern zones share Hausa as the working lingua franca, so an
+// alert for North Central is localised in Hausa rather than English. English
+// stays available for every zone as the general/default language via
+// SUPPORTED_LANGUAGES.
+export const ZONE_PRIMARY_LANGUAGE: Record<string, { name: string; code: string }> = {
   'North West':    { name: 'Hausa',           code: 'ha'  },
   'North East':    { name: 'Hausa',           code: 'ha'  },
-  'North Central': { name: 'English',         code: 'en'  },
+  'North Central': { name: 'Hausa',           code: 'ha'  },
   'South West':    { name: 'Yoruba',          code: 'yo'  },
   'South East':    { name: 'Igbo',            code: 'ig'  },
   'South South':   { name: 'Nigerian Pidgin', code: 'pcm' },
 }
 
-// All supported languages
+// All supported languages. English is the general/default language and stays
+// available for every zone; the rest are the localised pathways.
 export const SUPPORTED_LANGUAGES = [
+  { code: 'en',  name: 'English' },
   { code: 'ha',  name: 'Hausa' },
   { code: 'yo',  name: 'Yoruba' },
   { code: 'ig',  name: 'Igbo' },
   { code: 'pcm', name: 'Nigerian Pidgin' },
   { code: 'kr',  name: 'Kanuri' },
-  { code: 'en',  name: 'English' },
 ]
 
 export const MONTHS = [
@@ -95,19 +96,9 @@ export const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ]
 
-export const DISEASE_OPTIONS = [
-  'Lassa Fever',
-  'Cholera',
-  'Brucellosis',
-  'Meningitis (CSM)',
-  'Avian Influenza',
-  'Mpox',
-  'Rabies',
-  'Anthrax',
-  'Rift Valley Fever',
-  'Malaria',
-  'Other',
-]
+// Drawn from the canonical surveillance vocabulary so an alert can never be
+// composed against a disease spelling the rest of the platform does not know.
+export const DISEASE_OPTIONS: string[] = [...CANONICAL_DISEASES, 'Other']
 
 export const ALERT_TYPE_LABELS: Record<AlertType, string> = {
   SEASONAL:  'Seasonal Alert',

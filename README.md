@@ -1,36 +1,131 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OneHealth Hub
 
-## Getting Started
+A multilingual digital One Health surveillance **research prototype** for Nigeria.
 
-First, run the development server:
+It demonstrates one pathway end to end: a community observation reaches a
+surveillance workflow from a basic phone, is placed on a map alongside human,
+animal and environmental events, and comes back to the same community as a risk
+communication message in that zone's language.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+> **Research prototype — not a production national surveillance system.**
+> The USSD and SORMAS pathways are demonstrated architectures. There is no live
+> Africa's Talking subscription and no live SORMAS connection behind this
+> deployment.
+
+## The pathway
+
+```
+Community / field
+  USSD (Africa's Talking-compatible endpoint) · offline field form
+        │
+        ▼
+Surveillance
+  Human + Animal + Environmental + Zoonotic
+        │
+        ▼
+Situational awareness
+  GIS · severity · trends
+        │
+        ▼
+Response
+  RCCE → geopolitical zone → local language → community
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## What is real, and what is demonstrated
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Capability | Status |
+| --- | --- |
+| Dashboard, GIS map, sector and severity filters | Implemented, live data from Supabase |
+| Field data collection with offline store-and-forward | Implemented — reports queue in browser storage and sync on reconnect |
+| RCCE compose → schedule → send → delivery history | Implemented |
+| USSD reporting and alert retrieval | Implemented as an Africa's Talking-compatible webhook (`app/api/ussd/route.ts`). **Concept/prototype** — no live short-code subscription |
+| SORMAS interoperability | **Concept only.** Exports a SORMAS-shaped JSON file for manual import. No live SORMAS connection, no credentials, nothing pushed to any national system |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Surveillance taxonomy
 
-## Learn More
+`lib/taxonomy.ts` is the single place that decides what a record is called and
+what kind of record it is. Two categories, kept strictly apart:
 
-To learn more about Next.js, take a look at the following resources:
+- **Disease event** — a named diagnosis or hazard from the canonical vocabulary
+  (`Brucellosis`, `Lassa Fever`, `Avian Influenza (H5N1)`, …). One spelling per
+  disease, everywhere: map, cards, filters, alerts, exports.
+- **Community-reported signal** — a symptom or sign observed and reported, such
+  as `Abortion/miscarriage` or `Diarrhea/vomiting`. A signal is **not** a
+  diagnosis and is never counted as one. It carries a sector and a location and
+  waits for field verification.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Historical rows are normalised on read, so past spellings stay usable without
+rewriting the operational database. `data/migrations/001` applies the same
+normalisation at rest.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Geography
 
-## Deploy on Vercel
+Locations are always written as **State → LGA/Town**, e.g. `Jigawa → Doko`.
+`lib/geo.ts` canonicalises free-text state names and owns the single
+state → geopolitical zone mapping used by the dashboard, the USSD handler and
+the field form.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Language pathways
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Geopolitical zone | Primary localised pathway |
+| --- | --- |
+| North East | Hausa |
+| North West | Hausa |
+| North Central | Hausa |
+| South West | Yoruba |
+| South East | Igbo |
+| South South | Nigerian Pidgin |
+
+English remains available for every zone as the general/default language.
+`data/seed/rcce_demo_alerts.sql` seeds one demonstration alert per pathway.
+
+## Reporter privacy
+
+A reporter's phone number is never published.
+
+- The USSD handler writes the phone number **only** to `ussd_reports`, the audit
+  log a field officer needs for follow-up. It is not written to `outbreaks`,
+  which the public dashboard reads.
+- Community reports are attributed as `Community reporter · CR-XXXXXX` — a
+  reference derived from the record's own ID, resolvable by an authorised
+  officer, not reversible to a phone number by a visitor.
+- SORMAS exports carry the reporter reference, never the number.
+- `data/migrations/002` puts row level security on `ussd_reports` so the audit
+  log is not readable through the public anon key.
+
+Run both migrations before treating any deployment as safe to share.
+
+## Setup
+
+```bash
+npm install
+npm run dev
+```
+
+Environment (`.env.local`):
+
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+```
+
+Point an Africa's Talking USSD channel at `POST /api/ussd` to exercise the
+reporting flow against a real handset.
+
+## Database scripts
+
+| Script | Purpose |
+| --- | --- |
+| `data/migrations/001_normalise_surveillance_taxonomy.sql` | Remove reporter phone numbers from `outbreaks`, fold duplicate disease spellings, move syndromic free text onto the signal convention, canonicalise state names and zones |
+| `data/migrations/002_restrict_ussd_reports.sql` | Row level security on the USSD audit log |
+| `data/seed/rcce_demo_alerts.sql` | One RCCE demo alert per zone/language pathway |
+
+## Stack
+
+Next.js (App Router) · TypeScript · Supabase · Leaflet · Recharts · Tailwind.
+
+---
+
+© 2026 Jibrin Abi Precious. Research prototype — shared for academic evaluation.
+See `/about`.
