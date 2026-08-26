@@ -121,6 +121,22 @@ set    geopolitical_zone = case
 end
 where  geopolitical_zone is null or btrim(geopolitical_zone) = '' or geopolitical_zone is distinct from geopolitical_zone;
 
+-- ------------------------------------------------------------
+-- 5. Settlements wrongly recorded as LGAs.
+--
+--    The USSD prompt asks for "your LGA or town" and the handler wrote the
+--    answer into both `name` and `lga`, so a settlement became a reporting
+--    unit of its own. Doko is a town in Garki LGA, Jigawa — not an LGA.
+--    The handler no longer does this; these are the rows it already created.
+-- ------------------------------------------------------------
+
+update locations set lga = 'Garki'
+where  state = 'Jigawa' and name = 'Doko' and lga = 'Doko';
+
+-- Review the rest before deciding — each needs local knowledge, so nothing
+-- is guessed here:
+--   select id, state, lga, name from locations where lower(lga) = lower(name);
+
 commit;
 
 -- ============================================================

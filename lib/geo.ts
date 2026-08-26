@@ -116,10 +116,21 @@ export function titleCase(value: string): string {
 
 /**
  * Standard geographic label used across the map, cards and exports:
- * "Jigawa -> Doko", or just "Jigawa" when no LGA/town is known.
+ * "Jigawa → Garki", or just "Jigawa" when nothing finer is known.
+ *
+ * `siteName` is the fallback for records where the LGA has not been
+ * established yet — a USSD reporter is asked for "your LGA or town", so a
+ * settlement name is often all we have. Showing the settlement is better than
+ * showing the state alone, but it is never written into the LGA column: an
+ * unconfirmed town must not become a reporting unit of its own.
  */
-export function formatPlace(state?: string | null, lga?: string | null): string {
+export function formatPlace(
+  state?: string | null,
+  lga?: string | null,
+  siteName?: string | null
+): string {
   const s = displayState(state)
-  const l = lga?.trim() ? titleCase(lga) : null
+  const raw = lga?.trim() ? lga : siteName?.trim() ? siteName : null
+  const l = raw ? titleCase(raw) : null
   return l && l.toLowerCase() !== s.toLowerCase() ? `${s} → ${l}` : s
 }
