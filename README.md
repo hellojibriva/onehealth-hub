@@ -119,6 +119,8 @@ reporting flow against a real handset.
 | --- | --- |
 | `data/migrations/001_normalise_surveillance_taxonomy.sql` | Remove reporter phone numbers from `outbreaks`, fold duplicate disease spellings, move syndromic free text onto the signal convention, canonicalise state names and zones |
 | `data/migrations/002_restrict_ussd_reports.sql` | Row level security on the USSD audit log |
+| `data/migrations/003_harden_public_database_permissions.sql` | Read-only anon access to dashboard tables; no anon access to protected tables |
+| `data/migrations/004_restore_public_dashboard_reads.sql` | Explicit public SELECT policies so the dashboard still loads when RLS is enabled on its tables |
 | `data/seed/rcce_demo_alerts.sql` | One RCCE demo alert per zone/language pathway |
 
 ## Stack

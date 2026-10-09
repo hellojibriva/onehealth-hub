@@ -109,6 +109,7 @@ export default function DashboardPage() {
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [caseTrends, setCaseTrends] = useState<CaseTrend[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [sectorFilter, setSectorFilter] = useState<Sector>('ALL')
   const [activeTab, setActiveTab] = useState<'events' | 'trends' | 'alerts'>('events')
   const [userZone, setUserZone] = useState<string | undefined>(undefined)
@@ -116,6 +117,7 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchAll() {
       setLoading(true)
+      setLoadError(null)
 
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
@@ -134,6 +136,18 @@ export default function DashboardPage() {
         supabase.from('alerts').select('*, outbreaks(disease_name, sector)').order('created_at', { ascending: false }).limit(10),
         supabase.from('cases').select('report_date, confirmed_cases, deaths, recovered').order('report_date', { ascending: true }).limit(30),
       ])
+
+      // A failed or permission-denied read used to render as an empty
+      // dashboard. Say so instead, so a database problem is visible.
+      const failed = [
+        ['outbreaks', outbreakRes.error],
+        ['alerts', alertRes.error],
+        ['cases', caseRes.error],
+      ].filter(([, err]) => err)
+      if (failed.length) {
+        failed.forEach(([table, err]) => console.error(`[dashboard] ${table}`, err))
+        setLoadError(failed.map(([table, err]) => `${table}: ${err.message}`).join(' · '))
+      }
 
       if (outbreakRes.data) setOutbreaks(outbreakRes.data as Outbreak[])
       if (alertRes.data) setAlerts(alertRes.data as Alert[])
@@ -245,6 +259,13 @@ export default function DashboardPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {loadError && (
+          <div role="alert" className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm rounded-xl px-5 py-4">
+            <p className="font-semibold">Surveillance data could not be loaded</p>
+            <p className="text-red-300/80 text-xs mt-1">{loadError}</p>
+          </div>
+        )}
+
         <RCCEAlertBanner userZone={userZone} />
 
         <SurveillancePipeline />
