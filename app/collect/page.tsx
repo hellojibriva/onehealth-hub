@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import { WifiOff, Wifi, Send, ClipboardList, MapPin, Globe } from 'lucide-react';
-import { getSupabase } from '@/lib/supabaseClient';
-import { canonicalState, titleCase, zoneForState } from '@/lib/geo';
 import { CANONICAL_DISEASES, CANONICAL_SIGNALS } from '@/lib/taxonomy';
 
 interface FormData {
@@ -19,10 +17,6 @@ interface FormData {
   description:   string;
   reported_by:   string;
   start_date:    string;
-}
-
-interface LocationRow {
-  id: string;
 }
 
 type LangKey = 'EN' | 'HA' | 'IG' | 'YO' | 'PCM';
@@ -222,6 +216,25 @@ function saveToQueue(data: FormData) {
 
 function clearQueue() { localStorage.removeItem(OFFLINE_KEY); }
 
+function setQueue(items: FormData[]) {
+  if (items.length) localStorage.setItem(OFFLINE_KEY, JSON.stringify(items));
+  else clearQueue();
+}
+
+// Reports are written server-side by /api/report; the browser's anon key
+// has no write access to the surveillance tables (migration 003).
+async function submitReport(data: FormData) {
+  const res = await fetch('/api/report', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const { error } = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(error ?? `HTTP ${res.status}`);
+  }
+}
+
 async function geocodeLocation(query: string): Promise<{ lat: string; lon: string } | null> {
   if (!query.trim()) return null;
   try {
@@ -297,45 +310,7 @@ export default function CollectPage() {
     }
 
     try {
-      const supabase = getSupabase();
-      let locationId: string | null = null;
-
-      const stateName = canonicalState(form.state) ?? form.state;
-
-      const { data: existingLoc } = await supabase
-        .from('locations').select('id')
-        .ilike('name', form.location_name)
-        .eq('state', stateName)
-        .limit(1).maybeSingle();
-
-      if (existingLoc) {
-        locationId = (existingLoc as unknown as LocationRow).id;
-      } else {
-        const { data: newLoc, error: locError } = await supabase
-          .from('locations')
-          .insert({
-            name: form.location_name, state: stateName,
-            lga: form.lga ? titleCase(form.lga) : null, ward: form.ward || null,
-            geopolitical_zone: zoneForState(form.state) ?? '',
-            latitude:  parseFloat(form.latitude)  || 9.082,
-            longitude: parseFloat(form.longitude) || 8.675,
-          } as any)
-          .select('id').maybeSingle();
-
-        if (locError) throw locError;
-        locationId = (newLoc as unknown as LocationRow)?.id ?? null;
-      }
-
-      const { error: outbreakError } = await supabase.from('outbreaks').insert({
-        disease_name: form.disease_name, sector: form.sector,
-        severity: form.severity, status: 'ACTIVE',
-        report_source: 'FACILITY',
-        location_id: locationId, start_date: form.start_date,
-        description: form.description || null,
-        reported_by: form.reported_by || null,
-      } as any);
-
-      if (outbreakError) throw outbreakError;
+      await submitReport(form);
 
       setSaving(false);
       setSaved(true);
@@ -353,52 +328,20 @@ export default function CollectPage() {
     const queue = getQueue();
     if (!queue.length) return;
     setSyncing(true);
-    const supabase = getSupabase();
-    let synced = 0;
+    const failed: FormData[] = [];
 
     for (const item of queue) {
       try {
-        let locationId: string | null = null;
-        const { data: existingLoc } = await supabase
-          .from('locations').select('id')
-          .ilike('name', item.location_name).limit(1).maybeSingle();
-
-        if (existingLoc) {
-          locationId = (existingLoc as unknown as LocationRow).id;
-        } else {
-          const { data: newLoc, error: locError } = await supabase
-            .from('locations')
-            .insert({
-              name: item.location_name, state: canonicalState(item.state) ?? item.state,
-              lga: item.lga ? titleCase(item.lga) : null, ward: item.ward || null,
-              geopolitical_zone: zoneForState(item.state) ?? '',
-              latitude:  parseFloat(item.latitude)  || 9.082,
-              longitude: parseFloat(item.longitude) || 8.675,
-            } as any)
-            .select('id').maybeSingle();
-
-          if (locError) throw locError;
-          locationId = (newLoc as unknown as LocationRow)?.id ?? null;
-        }
-
-        const { error: outbreakError } = await supabase.from('outbreaks').insert({
-          disease_name: item.disease_name, sector: item.sector,
-          severity: item.severity, status: 'ACTIVE',
-          report_source: 'FACILITY',
-          location_id: locationId, start_date: item.start_date,
-          description: item.description || null,
-          reported_by: item.reported_by || null,
-        } as any);
-
-        if (outbreakError) throw outbreakError;
-        synced++;
+        await submitReport(item);
       } catch (err) {
         console.error('Sync failed for item:', item, err);
-        continue;
+        failed.push(item);
       }
     }
 
-    if (synced === queue.length) clearQueue();
+    // Keep only what failed, so a partial sync never resubmits a saved report.
+    setQueue(failed);
+    const synced = queue.length - failed.length;
     setQueueLen(getQueue().length);
     setSyncing(false);
     alert(`${synced} of ${queue.length} records synced.`);
